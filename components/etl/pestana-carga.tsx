@@ -101,6 +101,7 @@ export function PestanaCarga({
         <div className="flex flex-wrap items-center gap-3">
           <Button
             size="lg"
+            className="fondo-morado h-10 border-0 px-4 text-white shadow-sm disabled:opacity-50"
             onClick={() => onSubir(simularFallo)}
             disabled={desactivado}
           >

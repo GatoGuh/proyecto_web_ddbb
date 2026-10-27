@@ -2,19 +2,25 @@
 
 import { DownloadCloudIcon, RotateCcwIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { CIUDADES } from "@/lib/etl/ciudades"
+import { CIUDADES, colorCiudad } from "@/lib/etl/ciudades"
 import { TAMANO_LOTE } from "@/lib/etl/carga"
 import {
   diasInclusivos,
   MAX_DIAS_EXTRACCION,
   validarConfiguracion,
 } from "@/lib/etl/open-meteo"
+import type { ResumenCiudad } from "@/lib/etl/resumen"
 import type { Extraccion } from "@/hooks/use-extraccion"
-import { EstadoEtiqueta, formatoDuracion, formatoEntero } from "./comun"
+import {
+  ChipCiudad,
+  EstadoEtiqueta,
+  formatoDuracion,
+  formatoEntero,
+} from "./comun"
+import { MapaCiudades } from "./mapa-ciudades"
+import { Seccion } from "./seccion"
 
 export function Configuracion({
   ciudades,
@@ -25,6 +31,7 @@ export function Configuracion({
   setFin,
   extraccion,
   enCurso,
+  resumen,
   onExtraer,
   onReintentar,
 }: {
@@ -36,6 +43,7 @@ export function Configuracion({
   setFin: (v: string) => void
   extraccion: Extraccion | null
   enCurso: boolean
+  resumen: Map<string, ResumenCiudad>
   onExtraer: () => void
   onReintentar: (ciudad: string) => void
 }) {
@@ -44,10 +52,10 @@ export function Configuracion({
   const horas = dias && dias > 0 ? dias * 24 : 0
   const previstos = horas * ciudades.length
 
-  const alternar = (nombre: string, marcado: boolean) => {
+  const alternar = (nombre: string) => {
     const nuevo = new Set(ciudades)
-    if (marcado) nuevo.add(nombre)
-    else nuevo.delete(nombre)
+    if (nuevo.has(nombre)) nuevo.delete(nombre)
+    else nuevo.add(nombre)
     // Se conserva el orden de la lista original.
     setCiudades(CIUDADES.map((c) => c.nombre).filter((n) => nuevo.has(n)))
   }
@@ -58,152 +66,176 @@ export function Configuracion({
   const procesadas = peticiones.filter(
     (p) => p.estado === "completada" || p.estado === "error"
   ).length
+  const estados = Object.fromEntries(
+    peticiones.map((p) => [p.ciudad, p.estado])
+  )
+  const fallidas = peticiones.filter((p) => p.estado === "error")
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>1. Configuración de la extracción</CardTitle>
-      </CardHeader>
-      <CardContent className="grid grid-cols-1 gap-5 lg:grid-cols-[1fr_1fr_1.2fr]">
-        <fieldset className="grid grid-cols-1 gap-2">
-          <legend className="mb-2 text-sm font-medium">Ciudades</legend>
-          {CIUDADES.map((c) => (
-            <Label key={c.nombre} className="font-normal">
-              <Checkbox
-                checked={ciudades.includes(c.nombre)}
-                onCheckedChange={(v) => alternar(c.nombre, v)}
-                disabled={enCurso}
-              />
-              {c.nombre}
-              <span className="text-xs text-muted-foreground tabular-nums">
-                ({c.latitud}, {c.longitud})
-              </span>
-            </Label>
-          ))}
-        </fieldset>
-
-        <div className="grid content-start gap-3">
-          <div className="grid grid-cols-1 gap-1.5">
-            <Label htmlFor="fecha-inicio">Fecha inicial (UTC)</Label>
-            <Input
-              id="fecha-inicio"
-              type="date"
-              value={inicio}
-              onChange={(e) => setInicio(e.target.value)}
-              disabled={enCurso}
+    <Seccion
+      id="paso-descarga"
+      numero={1}
+      titulo="Elige qué descargar"
+      descripcion="Pulsa las provincias resaltadas del mapa para elegir ciudades, ajusta las fechas y descarga los datos horarios de Open-Meteo."
+    >
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
+        <div className="grid grid-cols-1 gap-3">
+          <div className="rounded-lg border bg-background/60 p-2 sm:p-4">
+            <MapaCiudades
+              seleccionadas={ciudades}
+              onAlternar={alternar}
+              bloqueado={enCurso}
+              estados={estados}
+              resumen={resumen}
             />
           </div>
-          <div className="grid grid-cols-1 gap-1.5">
-            <Label htmlFor="fecha-fin">Fecha final (UTC, incluida)</Label>
-            <Input
-              id="fecha-fin"
-              type="date"
-              value={fin}
-              onChange={(e) => setFin(e.target.value)}
-              disabled={enCurso}
-            />
+          <div>
+            <p
+              className="mb-2 text-sm text-muted-foreground"
+              id="ayuda-ciudades"
+            >
+              Ciudades seleccionadas ({ciudades.length} de {CIUDADES.length}).
+              También puedes elegirlas aquí:
+            </p>
+            <div
+              className="flex flex-wrap gap-2"
+              role="group"
+              aria-describedby="ayuda-ciudades"
+            >
+              {CIUDADES.map((c) => (
+                <ChipCiudad
+                  key={c.nombre}
+                  ciudad={c.nombre}
+                  color={colorCiudad(c.nombre)}
+                  marcada={ciudades.includes(c.nombre)}
+                  disabled={enCurso}
+                  onClick={() => alternar(c.nombre)}
+                />
+              ))}
+            </div>
           </div>
-          <p className="text-xs text-muted-foreground">
-            Máximo {MAX_DIAS_EXTRACCION} días por extracción. Los últimos días
-            pueden llegar con valores nulos: el archivo histórico se completa
-            con unos días de retraso.
-          </p>
         </div>
 
-        <div className="grid content-start gap-3">
-          <div className="rounded-lg border bg-muted/40 p-3 text-sm">
-            <p className="mb-1 font-medium">Volumen previsto</p>
-            <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5 tabular-nums">
-              <dt className="text-muted-foreground">Peticiones</dt>
-              <dd>{ciudades.length} (una por ciudad)</dd>
-              <dt className="text-muted-foreground">Días</dt>
-              <dd>{dias && dias > 0 ? dias : "—"}</dd>
-              <dt className="text-muted-foreground">Registros horarios</dt>
-              <dd>
-                {formatoEntero(previstos)}{" "}
-                <span className="text-muted-foreground">
-                  ({ciudades.length} × {formatoEntero(horas)} h)
-                </span>
-              </dd>
-              <dt className="text-muted-foreground">Lotes de carga</dt>
-              <dd>
-                hasta {Math.ceil(previstos / TAMANO_LOTE)} de {TAMANO_LOTE}
-              </dd>
-            </dl>
+        <div className="grid grid-cols-1 content-start gap-4">
+          <div className="grid grid-cols-2 gap-3">
+            <div className="grid gap-1.5">
+              <Label htmlFor="fecha-inicio">Desde</Label>
+              <Input
+                id="fecha-inicio"
+                type="date"
+                value={inicio}
+                onChange={(e) => setInicio(e.target.value)}
+                disabled={enCurso}
+              />
+            </div>
+            <div className="grid gap-1.5">
+              <Label htmlFor="fecha-fin">Hasta (incluido)</Label>
+              <Input
+                id="fecha-fin"
+                type="date"
+                value={fin}
+                onChange={(e) => setFin(e.target.value)}
+                disabled={enCurso}
+              />
+            </div>
           </div>
+          <p className="text-xs text-muted-foreground">
+            Fechas en hora UTC. Máximo {MAX_DIAS_EXTRACCION} días por descarga.
+          </p>
+
+          <div className="rounded-lg border bg-muted/50 p-4">
+            <p className="text-sm text-muted-foreground">Vas a descargar</p>
+            <p className="text-3xl font-semibold tracking-tight tabular-nums">
+              {formatoEntero(previstos)}{" "}
+              <span className="text-base font-medium text-muted-foreground">
+                registros horarios
+              </span>
+            </p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {ciudades.length} {ciudades.length === 1 ? "ciudad" : "ciudades"}{" "}
+              × {dias && dias > 0 ? dias : 0} días × 24 horas. Una petición por
+              ciudad; se suben en lotes de hasta {TAMANO_LOTE}.
+            </p>
+          </div>
+
           {errores.length > 0 && (
-            <ul
-              role="alert"
-              className="list-inside list-disc text-sm text-destructive"
-            >
+            <ul role="alert" className="grid gap-1 text-sm text-destructive">
               {errores.map((e) => (
                 <li key={e}>{e}</li>
               ))}
             </ul>
           )}
+
           <Button
             size="lg"
+            className="fondo-morado h-11 border-0 text-base text-white"
             onClick={onExtraer}
             disabled={enCurso || errores.length > 0}
           >
             <DownloadCloudIcon data-icon="inline-start" />
-            {enCurso ? "Extrayendo…" : "Extraer datos"}
+            {enCurso ? "Descargando…" : "Descargar datos"}
           </Button>
-        </div>
 
-        {extraccion && (
-          <div className="lg:col-span-3">
-            <p className="mb-2 text-sm" aria-live="polite">
-              Peticiones: {procesadas} de {peticiones.length} procesadas ·{" "}
-              {peticiones.length - procesadas} pendientes · periodo{" "}
-              {extraccion.inicio} → {extraccion.fin}
-            </p>
-            <ul className="flex flex-wrap gap-2">
-              {peticiones.map((p) => (
-                <li
-                  key={p.ciudad}
-                  className="flex items-center gap-2 rounded-lg border px-2.5 py-1.5 text-sm"
-                >
-                  <span className="font-medium">{p.ciudad}</span>
-                  <EstadoEtiqueta
-                    estado={p.estado}
-                    texto={
-                      p.estado === "completada"
-                        ? "Descargada"
-                        : p.estado === "error"
-                          ? "Error"
-                          : undefined
-                    }
-                  />
-                  {p.duracionMs !== undefined && (
-                    <span className="text-xs text-muted-foreground tabular-nums">
-                      {formatoDuracion(p.duracionMs)}
+          {extraccion && (
+            <div className="grid gap-2" aria-live="polite">
+              <p className="text-sm font-medium">
+                {procesadas} de {peticiones.length} ciudades procesadas
+                {procesadas < peticiones.length &&
+                  ` · faltan ${peticiones.length - procesadas}`}
+              </p>
+              <ul className="grid gap-1.5">
+                {peticiones.map((p) => (
+                  <li
+                    key={p.ciudad}
+                    className="flex items-center gap-2 text-sm"
+                  >
+                    <span
+                      aria-hidden
+                      className="size-2.5 rounded-full"
+                      style={{ background: colorCiudad(p.ciudad) }}
+                    />
+                    <span className="w-20 font-medium">{p.ciudad}</span>
+                    <EstadoEtiqueta
+                      estado={p.estado}
+                      texto={
+                        p.estado === "completada"
+                          ? "Descargada"
+                          : p.estado === "error"
+                            ? "Error"
+                            : undefined
+                      }
+                    />
+                    <span className="ml-auto text-xs text-muted-foreground tabular-nums">
+                      {p.duracionMs !== undefined &&
+                        formatoDuracion(p.duracionMs)}
                     </span>
-                  )}
-                  {p.estado === "error" && (
-                    <Button
-                      size="xs"
-                      variant="outline"
-                      onClick={() => onReintentar(p.ciudad)}
-                      disabled={enCurso}
-                    >
-                      <RotateCcwIcon data-icon="inline-start" />
-                      Reintentar
-                    </Button>
-                  )}
-                </li>
+                  </li>
+                ))}
+              </ul>
+              {fallidas.map((p) => (
+                <div
+                  key={p.ciudad}
+                  className="flex flex-wrap items-center gap-2 rounded-md border border-destructive/40 p-2 text-sm"
+                >
+                  <span className="text-destructive">
+                    {p.ciudad}: {p.error}
+                  </span>
+                  <Button
+                    size="xs"
+                    variant="outline"
+                    className="ml-auto"
+                    onClick={() => onReintentar(p.ciudad)}
+                    disabled={enCurso}
+                  >
+                    <RotateCcwIcon data-icon="inline-start" />
+                    Reintentar {p.ciudad}
+                  </Button>
+                </div>
               ))}
-            </ul>
-            {peticiones
-              .filter((p) => p.estado === "error")
-              .map((p) => (
-                <p key={p.ciudad} className="mt-2 text-sm text-destructive">
-                  {p.ciudad}: {p.error}
-                </p>
-              ))}
-          </div>
-        )}
-      </CardContent>
-    </Card>
+            </div>
+          )}
+        </div>
+      </div>
+    </Seccion>
   )
 }

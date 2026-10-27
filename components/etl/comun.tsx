@@ -3,6 +3,7 @@
 import * as React from "react"
 import {
   CheckCircle2Icon,
+  CheckIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
   CircleDashedIcon,
@@ -16,27 +17,38 @@ export type EstadoFase = "pendiente" | "en_curso" | "completada" | "error"
 
 const ESTADOS: Record<
   EstadoFase,
-  { texto: string; Icono: typeof CheckCircle2Icon; clase: string }
+  {
+    texto: string
+    Icono: typeof CheckCircle2Icon
+    clase: string
+    /** Color del icono cuando la etiqueta va sobre un fondo de color. */
+    icono: string
+  }
 > = {
   pendiente: {
     texto: "Pendiente",
     Icono: CircleDashedIcon,
     clase: "border-border text-muted-foreground",
+    icono: "text-zinc-400",
   },
   en_curso: {
     texto: "En curso",
     Icono: Loader2Icon,
-    clase: "border-sky-600/40 text-sky-700 dark:text-sky-300",
+    clase: "border-sky-600/40 bg-sky-500/10 text-sky-700 dark:text-sky-300",
+    icono: "text-sky-400",
   },
   completada: {
     texto: "Completada",
     Icono: CheckCircle2Icon,
-    clase: "border-emerald-600/40 text-emerald-700 dark:text-emerald-300",
+    clase:
+      "border-emerald-600/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300",
+    icono: "text-emerald-400",
   },
   error: {
     texto: "Con errores",
     Icono: TriangleAlertIcon,
-    clase: "border-destructive/50 text-destructive",
+    clase: "border-destructive/50 bg-destructive/10 text-destructive",
+    icono: "text-red-400",
   },
 }
 
@@ -44,24 +56,31 @@ const ESTADOS: Record<
 export function EstadoEtiqueta({
   estado,
   texto,
+  sobreColor = false,
   className,
 }: {
   estado: EstadoFase
   texto?: string
+  /** Para fondos de color (degradados): etiqueta blanca con icono de color. */
+  sobreColor?: boolean
   className?: string
 }) {
-  const { texto: base, Icono, clase } = ESTADOS[estado]
+  const { texto: base, Icono, clase, icono } = ESTADOS[estado]
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium whitespace-nowrap",
-        clase,
+        "inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-xs font-medium whitespace-nowrap",
+        sobreColor ? "border-white/10 bg-white/[0.06] text-zinc-100" : clase,
         className
       )}
     >
       <Icono
         aria-hidden
-        className={cn("size-3.5", estado === "en_curso" && "animate-spin")}
+        className={cn(
+          "size-3.5",
+          sobreColor && icono,
+          estado === "en_curso" && "animate-spin"
+        )}
       />
       {texto ?? base}
     </span>
@@ -229,4 +248,45 @@ export function descargarJson(nombre: string, datos: unknown) {
   a.download = nombre
   a.click()
   URL.revokeObjectURL(url)
+}
+
+/** Botón conmutador de una ciudad, con su color fijo y estado accesible. */
+export function ChipCiudad({
+  ciudad,
+  color,
+  marcada,
+  disabled,
+  onClick,
+}: {
+  ciudad: string
+  color: string
+  marcada: boolean
+  disabled?: boolean
+  onClick: () => void
+}) {
+  return (
+    <button
+      type="button"
+      aria-pressed={marcada}
+      disabled={disabled}
+      onClick={onClick}
+      className={cn(
+        "inline-flex h-8 items-center gap-2 rounded-md border px-3 text-sm font-medium transition-colors focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none disabled:opacity-50",
+        marcada
+          ? "border-primary/40 bg-accent text-accent-foreground"
+          : "bg-card text-muted-foreground hover:bg-muted"
+      )}
+    >
+      <span
+        aria-hidden
+        className="size-2.5 rounded-full"
+        style={{
+          background: marcada ? color : "transparent",
+          boxShadow: `inset 0 0 0 2px ${color}`,
+        }}
+      />
+      {ciudad}
+      {marcada && <CheckIcon aria-hidden className="size-3.5" />}
+    </button>
+  )
 }

@@ -7,6 +7,7 @@ import {
   ArrowUpDownIcon,
   CheckSquareIcon,
   FilterXIcon,
+  SlidersHorizontalIcon,
   SquareIcon,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -29,14 +30,14 @@ import {
   type Filtros,
   type Orden,
 } from "@/lib/etl/filtrar"
+import { colorCiudad } from "@/lib/etl/ciudades"
 import { claveRegistro, type RegistroValido } from "@/lib/etl/tipos"
 import {
-  Explicacion,
+  ChipCiudad,
   formatoDecimal,
   formatoEntero,
   formatoFechaUtc,
   Paginador,
-  SelectorNativo,
   usePaginacion,
 } from "./comun"
 import { SinDatos } from "./pestanas-datos"
@@ -105,6 +106,7 @@ export function PestanaValidos(props: Props) {
   const [vista, setVista] = React.useState<"coinciden" | "excluidos">(
     "coinciden"
   )
+  const [masFiltros, setMasFiltros] = React.useState(false)
 
   const excluidos = React.useMemo(() => {
     if (vista !== "excluidos") return []
@@ -154,239 +156,245 @@ export function PestanaValidos(props: Props) {
     return <SinDatos texto="No hay registros válidos todavía." />
   }
 
-  return (
-    <div className="grid grid-cols-1 gap-4">
-      <Explicacion>
-        Orden de operaciones:{" "}
-        <strong>
-          registros válidos → filtros → ordenación → selección → carga
-        </strong>
-        . La paginación solo cambia lo que ves. Al cambiar los filtros no se
-        selecciona nada automáticamente; solo se subirán las filas seleccionadas
-        que <em>sigan cumpliendo</em> los filtros actuales.
-      </Explicacion>
+  const avanzadosActivos = [
+    filtros.desde || filtros.hasta,
+    filtros.tempMin || filtros.tempMax,
+    filtros.humMin || filtros.humMax,
+    filtros.precMin || filtros.precMax,
+  ].filter(Boolean).length
+  const hayFiltros =
+    avanzadosActivos > 0 || filtros.soloLluvia || filtros.ciudades !== null
+  const marcadasCiudad = filtros.ciudades ?? ciudadesDisponibles
+  const columnaOrden = COLUMNAS.find((c) => c.campo === orden.campo)?.titulo
 
-      <fieldset className="grid grid-cols-1 gap-4 rounded-xl border p-3">
-        <legend className="px-1 text-sm font-medium">Filtros</legend>
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-          <span className="text-sm text-muted-foreground">Ciudades:</span>
-          {ciudadesDisponibles.map((c) => {
-            const marcadas = filtros.ciudades ?? ciudadesDisponibles
-            return (
-              <Label key={c} className="font-normal">
-                <Checkbox
-                  checked={marcadas.includes(c)}
-                  onCheckedChange={(v) => {
-                    const nuevas = ciudadesDisponibles.filter((x) =>
-                      x === c ? v : marcadas.includes(x)
-                    )
-                    // Todas marcadas equivale a "sin filtro de ciudad".
-                    cambiarFiltros({
-                      ciudades:
-                        nuevas.length === ciudadesDisponibles.length
-                          ? null
-                          : nuevas,
-                    })
-                  }}
-                />
-                {c}
-              </Label>
-            )
-          })}
-          {filtros.ciudades?.length === 0 && (
-            <span className="text-sm text-destructive">
-              Ninguna ciudad marcada: no coincide ningún registro
+  return (
+    <div className="grid grid-cols-1 gap-5">
+      <ol className="grid gap-2 text-sm sm:grid-cols-3">
+        {[
+          "Filtra para quedarte con las filas que te interesan.",
+          "Marca las filas que quieres subir, una a una o todas las filtradas.",
+          "Revisa la lista final en «Revisar y subir» y súbela.",
+        ].map((t, i) => (
+          <li key={t} className="flex gap-2 rounded-md bg-muted/60 p-2.5">
+            <span
+              aria-hidden
+              className="grid size-5 shrink-0 place-items-center rounded-sm bg-primary text-[11px] font-bold text-primary-foreground"
+            >
+              {i + 1}
             </span>
-          )}
-        </div>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <div className="grid grid-cols-1 gap-1.5">
-            <Label htmlFor="f-desde">Desde (UTC)</Label>
-            <Input
-              id="f-desde"
-              type="datetime-local"
-              value={filtros.desde}
-              onChange={(e) => cambiarFiltros({ desde: e.target.value })}
+            <span className="text-muted-foreground">{t}</span>
+          </li>
+        ))}
+      </ol>
+
+      <div className="grid grid-cols-1 gap-3 rounded-lg border p-3">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="mr-1 text-sm font-medium">Filtrar</span>
+          {ciudadesDisponibles.map((c) => (
+            <ChipCiudad
+              key={c}
+              ciudad={c}
+              color={colorCiudad(c)}
+              marcada={marcadasCiudad.includes(c)}
+              onClick={() => {
+                const nuevas = ciudadesDisponibles.filter((x) =>
+                  x === c
+                    ? !marcadasCiudad.includes(x)
+                    : marcadasCiudad.includes(x)
+                )
+                // Todas marcadas equivale a "sin filtro de ciudad".
+                cambiarFiltros({
+                  ciudades:
+                    nuevas.length === ciudadesDisponibles.length
+                      ? null
+                      : nuevas,
+                })
+              }}
             />
-          </div>
-          <div className="grid grid-cols-1 gap-1.5">
-            <Label htmlFor="f-hasta">Hasta (UTC, incluida)</Label>
-            <Input
-              id="f-hasta"
-              type="datetime-local"
-              value={filtros.hasta}
-              onChange={(e) => cambiarFiltros({ hasta: e.target.value })}
-            />
-          </div>
-          <RangoNumerico
-            id="temp"
-            titulo="Temperatura (°C)"
-            min={filtros.tempMin}
-            max={filtros.tempMax}
-            onMin={(v) => cambiarFiltros({ tempMin: v })}
-            onMax={(v) => cambiarFiltros({ tempMax: v })}
-          />
-          <RangoNumerico
-            id="hum"
-            titulo="Humedad (%)"
-            min={filtros.humMin}
-            max={filtros.humMax}
-            onMin={(v) => cambiarFiltros({ humMin: v })}
-            onMax={(v) => cambiarFiltros({ humMax: v })}
-          />
-          <RangoNumerico
-            id="prec"
-            titulo="Precipitación (mm)"
-            min={filtros.precMin}
-            max={filtros.precMax}
-            onMin={(v) => cambiarFiltros({ precMin: v })}
-            onMax={(v) => cambiarFiltros({ precMax: v })}
-          />
-          <Label className="self-end font-normal">
+          ))}
+          <Label className="ml-1 font-normal">
             <Switch
               checked={filtros.soloLluvia}
               onCheckedChange={(v) => cambiarFiltros({ soloLluvia: v })}
             />
-            Solo registros con lluvia (precipitación &gt; 0)
+            Solo horas con lluvia
           </Label>
-          <div className="grid grid-cols-1 gap-1.5">
-            <Label htmlFor="orden-campo">Ordenar por</Label>
-            <div className="flex gap-2">
-              <SelectorNativo
-                id="orden-campo"
-                className="flex-1"
-                value={orden.campo}
-                onChange={(e) =>
-                  props.setOrden({
-                    ...orden,
-                    campo: e.target.value as CampoOrden,
-                  })
-                }
-              >
-                {COLUMNAS.map((c) => (
-                  <option key={c.campo} value={c.campo}>
-                    {c.titulo}
-                  </option>
-                ))}
-              </SelectorNativo>
-              <SelectorNativo
-                aria-label="Dirección"
-                value={orden.direccion}
-                onChange={(e) =>
-                  props.setOrden({
-                    ...orden,
-                    direccion: e.target.value as Orden["direccion"],
-                  })
-                }
-              >
-                <option value="asc">Ascendente</option>
-                <option value="desc">Descendente</option>
-              </SelectorNativo>
-            </div>
-          </div>
-          <div className="flex items-end">
+          <div className="ml-auto flex flex-wrap gap-2">
             <Button
               variant="outline"
-              onClick={() => {
-                props.setFiltros(FILTROS_INICIALES)
-                paginacion.setPagina(1)
-              }}
+              size="sm"
+              aria-expanded={masFiltros}
+              aria-controls="mas-filtros"
+              onClick={() => setMasFiltros(!masFiltros)}
             >
-              <FilterXIcon data-icon="inline-start" />
-              Restablecer filtros
+              <SlidersHorizontalIcon data-icon="inline-start" />
+              Más filtros
+              {avanzadosActivos > 0 && ` (${avanzadosActivos} activos)`}
             </Button>
+            {hayFiltros && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  props.setFiltros(FILTROS_INICIALES)
+                  paginacion.setPagina(1)
+                }}
+              >
+                <FilterXIcon data-icon="inline-start" />
+                Restablecer filtros
+              </Button>
+            )}
           </div>
         </div>
-        {erroresFiltro.length > 0 && (
-          <ul
-            role="alert"
-            className="list-inside list-disc text-sm text-destructive"
+        {filtros.ciudades?.length === 0 && (
+          <p className="text-sm text-destructive">
+            No hay ninguna ciudad marcada, así que ninguna fila cumple los
+            filtros.
+          </p>
+        )}
+        {masFiltros && (
+          <div
+            id="mas-filtros"
+            className="grid grid-cols-1 gap-3 border-t pt-3 sm:grid-cols-2 lg:grid-cols-5"
           >
+            <div className="grid grid-cols-1 gap-1.5">
+              <Label htmlFor="f-desde">Desde (fecha y hora UTC)</Label>
+              <Input
+                id="f-desde"
+                type="datetime-local"
+                value={filtros.desde}
+                onChange={(e) => cambiarFiltros({ desde: e.target.value })}
+              />
+            </div>
+            <div className="grid grid-cols-1 gap-1.5">
+              <Label htmlFor="f-hasta">Hasta (incluida)</Label>
+              <Input
+                id="f-hasta"
+                type="datetime-local"
+                value={filtros.hasta}
+                onChange={(e) => cambiarFiltros({ hasta: e.target.value })}
+              />
+            </div>
+            <RangoNumerico
+              id="temp"
+              titulo="Temperatura (°C)"
+              min={filtros.tempMin}
+              max={filtros.tempMax}
+              onMin={(v) => cambiarFiltros({ tempMin: v })}
+              onMax={(v) => cambiarFiltros({ tempMax: v })}
+            />
+            <RangoNumerico
+              id="hum"
+              titulo="Humedad (%)"
+              min={filtros.humMin}
+              max={filtros.humMax}
+              onMin={(v) => cambiarFiltros({ humMin: v })}
+              onMax={(v) => cambiarFiltros({ humMax: v })}
+            />
+            <RangoNumerico
+              id="prec"
+              titulo="Precipitación (mm)"
+              min={filtros.precMin}
+              max={filtros.precMax}
+              onMin={(v) => cambiarFiltros({ precMin: v })}
+              onMax={(v) => cambiarFiltros({ precMax: v })}
+            />
+          </div>
+        )}
+        {erroresFiltro.length > 0 && (
+          <ul role="alert" className="grid gap-1 text-sm text-destructive">
             {erroresFiltro.map((e) => (
               <li key={e}>
-                {e} Ese límite no se aplica y la carga queda bloqueada.
+                {e} Ese límite no se aplica y la subida queda bloqueada hasta
+                corregirlo.
               </li>
             ))}
           </ul>
         )}
-      </fieldset>
+      </div>
 
-      <div className="flex flex-wrap items-center gap-2">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() =>
-            setSeleccion(
-              new Set([...seleccion, ...coinciden.map(claveRegistro)])
-            )
-          }
-          disabled={coinciden.length === 0}
-        >
-          <CheckSquareIcon data-icon="inline-start" />
-          Seleccionar las {formatoEntero(coinciden.length)} que cumplen los
-          filtros
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setSeleccion(new Set())}
-          disabled={seleccion.size === 0}
-        >
-          <SquareIcon data-icon="inline-start" />
-          Vaciar selección
-        </Button>
-        {seleccionFueraDeFiltros > 0 && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              const claves = new Set(coinciden.map(claveRegistro))
-              setSeleccion(new Set([...seleccion].filter((c) => claves.has(c))))
-            }}
-          >
-            Quitar de la selección las {formatoEntero(seleccionFueraDeFiltros)}{" "}
-            fuera de filtros
-          </Button>
-        )}
-        <p className="ml-auto text-sm" aria-live="polite">
-          <strong className="tabular-nums">
+      <div className="flex flex-wrap items-center gap-2 rounded-lg border bg-accent/50 p-3">
+        <p className="text-sm" aria-live="polite">
+          <strong className="text-base tabular-nums">
             {formatoEntero(props.aCargar)}
           </strong>{" "}
-          seleccionadas para cargar
+          filas marcadas que cumplen los filtros
           {seleccionFueraDeFiltros > 0 && (
-            <span className="text-amber-700 dark:text-amber-400">
-              {" "}
-              · {formatoEntero(seleccionFueraDeFiltros)} seleccionadas quedan
-              fuera de los filtros y no se subirán
+            <span className="block text-amber-700 dark:text-amber-400">
+              {formatoEntero(seleccionFueraDeFiltros)} marcadas no cumplen los
+              filtros y no se subirán.
             </span>
           )}
         </p>
+        <div className="ml-auto flex flex-wrap gap-2">
+          <Button
+            size="sm"
+            onClick={() =>
+              setSeleccion(
+                new Set([...seleccion, ...coinciden.map(claveRegistro)])
+              )
+            }
+            disabled={coinciden.length === 0}
+          >
+            <CheckSquareIcon data-icon="inline-start" />
+            Marcar las {formatoEntero(coinciden.length)} filtradas
+          </Button>
+          {seleccionFueraDeFiltros > 0 && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                const claves = new Set(coinciden.map(claveRegistro))
+                setSeleccion(
+                  new Set([...seleccion].filter((c) => claves.has(c)))
+                )
+              }}
+            >
+              Desmarcar las que no cumplen
+            </Button>
+          )}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setSeleccion(new Set())}
+            disabled={seleccion.size === 0}
+          >
+            <SquareIcon data-icon="inline-start" />
+            Desmarcar todo
+          </Button>
+        </div>
       </div>
 
-      <div
-        role="radiogroup"
-        aria-label="Registros a mostrar"
-        className="flex flex-wrap gap-2"
-      >
-        <Button
-          size="sm"
-          role="radio"
-          aria-checked={vista === "coinciden"}
-          variant={vista === "coinciden" ? "secondary" : "ghost"}
-          onClick={() => setVista("coinciden")}
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div
+          role="radiogroup"
+          aria-label="Filas a mostrar"
+          className="inline-flex rounded-md border p-0.5"
         >
-          Coinciden con los filtros ({formatoEntero(coinciden.length)})
-        </Button>
-        <Button
-          size="sm"
-          role="radio"
-          aria-checked={vista === "excluidos"}
-          variant={vista === "excluidos" ? "secondary" : "ghost"}
-          onClick={() => setVista("excluidos")}
-        >
-          Excluidos por los filtros (
-          {formatoEntero(validos.length - coinciden.length)})
-        </Button>
+          <Button
+            size="sm"
+            role="radio"
+            aria-checked={vista === "coinciden"}
+            variant={vista === "coinciden" ? "secondary" : "ghost"}
+            onClick={() => setVista("coinciden")}
+          >
+            Cumplen los filtros ({formatoEntero(coinciden.length)})
+          </Button>
+          <Button
+            size="sm"
+            role="radio"
+            aria-checked={vista === "excluidos"}
+            variant={vista === "excluidos" ? "secondary" : "ghost"}
+            onClick={() => setVista("excluidos")}
+          >
+            No los cumplen ({formatoEntero(validos.length - coinciden.length)})
+          </Button>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          Ordenado por «{columnaOrden}»,{" "}
+          {orden.direccion === "asc" ? "de menor a mayor" : "de mayor a menor"}.
+          Pulsa el título de una columna para cambiarlo.
+        </p>
       </div>
 
       {filas.length === 0 ? (

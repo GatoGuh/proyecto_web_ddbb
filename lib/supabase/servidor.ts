@@ -60,19 +60,28 @@ export class ErrorConfiguracion extends Error {}
  * autenticación).
  */
 export function accesoPermitido(): Response | null {
-  if (
-    process.env.NODE_ENV === "production" &&
-    process.env.ETL_PERMITIR_EN_PRODUCCION !== "true"
-  ) {
-    return Response.json(
-      {
-        error:
-          "Acceso a Supabase deshabilitado en producción porque la aplicación no tiene autenticación. Para permitirlo, define ETL_PERMITIR_EN_PRODUCCION=true y vuelve a desplegar.",
-      },
-      { status: 403 }
-    )
-  }
-  return null
+  if (process.env.NODE_ENV !== "production") return null
+  const valor = process.env.ETL_PERMITIR_EN_PRODUCCION
+  // Tolera comillas, espacios y mayúsculas: "true", ' True ', TRUE…
+  const normalizado = valor
+    ?.trim()
+    .replace(/^["']|["']$/g, "")
+    .trim()
+    .toLowerCase()
+  if (normalizado === "true") return null
+
+  // El valor es un simple interruptor (no un secreto): mostrarlo ayuda a
+  // diagnosticar por qué no se reconoce.
+  const recibido =
+    valor === undefined
+      ? "la variable no existe en este despliegue (revisa su entorno —Production o Preview— y vuelve a desplegar)"
+      : `se ha recibido ${JSON.stringify(valor.slice(0, 20))}, que no equivale a true`
+  return Response.json(
+    {
+      error: `Acceso a Supabase deshabilitado en producción porque la aplicación no tiene autenticación. Para permitirlo, define ETL_PERMITIR_EN_PRODUCCION=true y vuelve a desplegar. Diagnóstico: ${recibido}.`,
+    },
+    { status: 403 }
+  )
 }
 
 /** Mensaje de error de Supabase sin datos sensibles. */
