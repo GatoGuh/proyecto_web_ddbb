@@ -251,7 +251,7 @@ function ResumenEnfocado({
 }) {
   return (
     <div
-      className="min-h-[3.25rem] rounded-md border solido px-3 py-2 text-sm"
+      className="min-h-[3.25rem] rounded-md solido px-3 py-2 text-sm"
       aria-live="polite"
     >
       {!ciudad ? (
