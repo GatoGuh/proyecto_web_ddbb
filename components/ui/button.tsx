@@ -8,6 +8,8 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default: "fondo-morado text-white",
+        // Opción elegida en un grupo de botones (selector segmentado).
+        seleccion: "morado-vertical text-white",
         outline: "solido text-foreground aria-expanded:solido-acento",
         secondary: "solido text-secondary-foreground",
         ghost: "hover:solido hover:text-foreground aria-expanded:solido",
