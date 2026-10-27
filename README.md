@@ -47,6 +47,7 @@ npm run dev                # http://localhost:3000
 npm test                   # pruebas unitarias con fixtures controlados
 ETL_URL_BASE=http://localhost:3000 npm run test:integracion   # requiere `npm run dev`
 npm run typecheck && npm run lint && npm run build
+npm run generar:mapa       # regenera lib/etl/mapa-espana.ts (provincias del IGN)
 ```
 
 ## El pipeline

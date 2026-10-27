@@ -492,7 +492,7 @@ export function BancoEtl() {
           >
             Open-Meteo.com
           </a>{" "}
-          (CC BY 4.0). Mapa: © colaboradores de OpenStreetMap. Herramienta
+          (CC BY 4.0). Mapa: Instituto Geográfico Nacional. Herramienta
           didáctica sin autenticación.
         </footer>
       </div>

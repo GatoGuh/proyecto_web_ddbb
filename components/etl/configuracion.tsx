@@ -1,6 +1,5 @@
 "use client"
 
-import dynamic from "next/dynamic"
 import { DownloadCloudIcon, RotateCcwIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -20,17 +19,8 @@ import {
   formatoDuracion,
   formatoEntero,
 } from "./comun"
+import { MapaCiudades } from "./mapa-ciudades"
 import { Seccion } from "./seccion"
-
-// Leaflet necesita `window`: el mapa solo se carga en el navegador.
-const MapaCiudades = dynamic(() => import("./mapa-ciudades"), {
-  ssr: false,
-  loading: () => (
-    <div className="grid h-full min-h-[280px] place-items-center bg-muted text-sm text-muted-foreground">
-      Cargando mapa…
-    </div>
-  ),
-})
 
 export function Configuracion({
   ciudades,
@@ -86,11 +76,11 @@ export function Configuracion({
       id="paso-descarga"
       numero={1}
       titulo="Elige qué descargar"
-      descripcion="Marca las ciudades en el mapa o en la lista, elige las fechas y descarga los datos horarios de Open-Meteo."
+      descripcion="Pulsa las provincias resaltadas del mapa para elegir ciudades, ajusta las fechas y descarga los datos horarios de Open-Meteo."
     >
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
         <div className="grid grid-cols-1 gap-3">
-          <div className="isolate h-[320px] overflow-hidden rounded-lg border sm:h-[360px]">
+          <div className="rounded-lg border bg-background/60 p-2 sm:p-4">
             <MapaCiudades
               seleccionadas={ciudades}
               onAlternar={alternar}
@@ -105,7 +95,7 @@ export function Configuracion({
               id="ayuda-ciudades"
             >
               Ciudades seleccionadas ({ciudades.length} de {CIUDADES.length}).
-              Tras la descarga, pulsa una ciudad en el mapa para ver su resumen.
+              También puedes elegirlas aquí:
             </p>
             <div
               className="flex flex-wrap gap-2"
@@ -178,7 +168,7 @@ export function Configuracion({
 
           <Button
             size="lg"
-            className="h-11 text-base"
+            className="fondo-morado h-11 border-0 text-base text-white"
             onClick={onExtraer}
             disabled={enCurso || errores.length > 0}
           >

@@ -53,98 +53,76 @@
 }
 
 :root {
-  --background: #f4f7fb;
-  --foreground: #0f1b2d;
-  --card: #ffffff;
-  --card-foreground: #0f1b2d;
-  --popover: #ffffff;
-  --popover-foreground: #0f1b2d;
-  --primary: #1d4ed8;
+  /* Tema único oscuro: negro neutro con resaltados en degradado morado. */
+  color-scheme: dark;
+  --background: #09090b;
+  --foreground: #ececf1;
+  --card: #121217;
+  --card-foreground: #ececf1;
+  --popover: #17171d;
+  --popover-foreground: #ececf1;
+  --primary: #7c3aed;
   --primary-foreground: #ffffff;
-  --secondary: #e8eef7;
-  --secondary-foreground: #0f1b2d;
-  --muted: #eef2f8;
-  --muted-foreground: #556275;
-  --accent: #e3ecfd;
-  --accent-foreground: #1e3a8a;
-  --destructive: #c62828;
-  --border: #dbe2ec;
-  --input: #cbd5e1;
-  --ring: #3b82f6;
-  --chart-1: #2a78d6;
-  --chart-2: #eb6834;
-  --chart-3: #1baf7a;
-  --chart-4: #eda100;
-  --chart-5: #e87ba4;
-  --radius: 0.25rem;
-  --sidebar: #f8fafc;
-  --sidebar-foreground: #0f1b2d;
-  --sidebar-primary: #1d4ed8;
-  --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #e3ecfd;
-  --sidebar-accent-foreground: #1e3a8a;
-  --sidebar-border: #dbe2ec;
-  --sidebar-ring: #3b82f6;
-
-  /* Identidad del proyecto: cielo para la estructura, atardecer para la acción. */
-  --cielo: linear-gradient(118deg, #0f2a6b 0%, #1d4ed8 48%, #0ea5e9 100%);
-  --atardecer: linear-gradient(100deg, #c2410c 0%, #be185d 100%);
-  --atardecer-hover: linear-gradient(100deg, #9a3412 0%, #9d174d 100%);
-
-  /* Colores de ciudad (paleta categórica validada, orden fijo). */
-  --serie-1: #2a78d6;
-  --serie-2: #eb6834;
-  --serie-3: #1baf7a;
-  --serie-4: #eda100;
-  --serie-5: #e87ba4;
-  --rejilla: #e1e6ee;
-  --eje: #c3cad6;
-}
-
-.dark {
-  --background: #0a1120;
-  --foreground: #e6edf7;
-  --card: #111a2c;
-  --card-foreground: #e6edf7;
-  --popover: #111a2c;
-  --popover-foreground: #e6edf7;
-  --primary: #60a5fa;
-  --primary-foreground: #0a1120;
-  --secondary: #1a2540;
-  --secondary-foreground: #e6edf7;
-  --muted: #16203a;
-  --muted-foreground: #9aa8bd;
-  --accent: #1c2a4a;
-  --accent-foreground: #dbeafe;
+  --secondary: #1c1c24;
+  --secondary-foreground: #ececf1;
+  --muted: #18181f;
+  --muted-foreground: #a1a1b0;
+  --accent: #231a3a;
+  --accent-foreground: #ddd6fe;
   --destructive: #f87171;
-  --border: rgb(255 255 255 / 9%);
-  --input: rgb(255 255 255 / 15%);
-  --ring: #60a5fa;
-  --chart-1: #3987e5;
-  --chart-2: #d95926;
-  --chart-3: #199e70;
-  --chart-4: #c98500;
-  --chart-5: #d55181;
-  --sidebar: #111a2c;
-  --sidebar-foreground: #e6edf7;
-  --sidebar-primary: #60a5fa;
-  --sidebar-primary-foreground: #0a1120;
-  --sidebar-accent: #1c2a4a;
-  --sidebar-accent-foreground: #dbeafe;
-  --sidebar-border: rgb(255 255 255 / 9%);
-  --sidebar-ring: #60a5fa;
+  --border: rgb(255 255 255 / 8%);
+  --input: rgb(255 255 255 / 14%);
+  --ring: #8b5cf6;
+  --chart-1: #4e7cb7;
+  --chart-2: #58a576;
+  --chart-3: #7f6db2;
+  --chart-4: #b88842;
+  --chart-5: #a66088;
+  --radius: 0.25rem;
+  --sidebar: #121217;
+  --sidebar-foreground: #ececf1;
+  --sidebar-primary: #7c3aed;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #231a3a;
+  --sidebar-accent-foreground: #ddd6fe;
+  --sidebar-border: rgb(255 255 255 / 8%);
+  --sidebar-ring: #8b5cf6;
 
-  --cielo: linear-gradient(118deg, #081634 0%, #1e3a8a 50%, #0369a1 100%);
-  --atardecer: linear-gradient(100deg, #c2410c 0%, #be185d 100%);
-  --atardecer-hover: linear-gradient(100deg, #ea580c 0%, #db2777 100%);
+  /* Resaltados: un único degradado índigo → violeta. */
+  --morado: linear-gradient(118deg, #4f46e5 0%, #7c3aed 55%, #a855f7 100%);
+  --morado-hover: linear-gradient(
+    118deg,
+    #4338ca 0%,
+    #6d28d9 55%,
+    #9333ea 100%
+  );
+  --resplandor:
+    radial-gradient(
+      900px 340px at 8% -10%,
+      rgb(124 58 237 / 32%),
+      transparent 65%
+    ),
+    radial-gradient(
+      700px 300px at 92% -20%,
+      rgb(79 70 229 / 26%),
+      transparent 65%
+    );
 
-  --serie-1: #3987e5;
-  --serie-2: #d95926;
-  --serie-3: #199e70;
-  --serie-4: #c98500;
-  --serie-5: #d55181;
-  --rejilla: #1f2a40;
-  --eje: #334155;
+  /* Colores de ciudad: apagados, validados para daltonismo sobre --card. */
+  --serie-1: #4e7cb7;
+  --serie-2: #58a576;
+  --serie-3: #7f6db2;
+  --serie-4: #b88842;
+  --serie-5: #a66088;
+  --rejilla: #23232c;
+  --eje: #3a3a46;
+
+  /* Mapa */
+  --mapa-provincia: #1a1a21;
+  --mapa-borde: #2b2b36;
+  --mapa-contorno: #4a4a5a;
+  --mapa-disponible: #2a2147;
+  --mapa-disponible-borde: #7c6bd6;
 }
 
 @layer base {
@@ -160,57 +138,36 @@
 }
 
 @layer components {
-  .fondo-cielo {
-    background-image: var(--cielo);
+  .fondo-morado {
+    background-image: var(--morado);
   }
-  .fondo-atardecer {
-    background-image: var(--atardecer);
+  button.fondo-morado:not(:disabled):hover {
+    background-image: var(--morado-hover);
   }
-  .fondo-atardecer:not(:disabled):hover {
-    background-image: var(--atardecer-hover);
+  .fondo-cabecera {
+    background-color: var(--background);
+    background-image: var(--resplandor);
   }
 }
 
-/* Mapa (Leaflet) integrado con el tema. */
-.leaflet-container {
-  font-family: var(--font-sans);
-  background: var(--muted);
+/* Mapa de provincias (SVG). */
+.provincia-ciudad {
+  cursor: pointer;
+  outline: none;
 }
-.leaflet-tile-pane {
-  filter: saturate(0.85);
+.provincia-ciudad path {
+  transition: filter 150ms;
 }
-.dark .leaflet-tile-pane {
-  filter: invert(1) hue-rotate(180deg) brightness(0.9) contrast(0.9)
-    saturate(0.6);
+.provincia-ciudad:hover path,
+.provincia-ciudad:focus-visible path {
+  filter: brightness(1.35);
 }
-.leaflet-tooltip.etiqueta-ciudad {
-  background: var(--card);
-  color: var(--foreground);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  box-shadow: none;
-  font-size: 12px;
-  font-weight: 600;
-  padding: 1px 6px;
+.provincia-ciudad:focus-visible path {
+  stroke: #ffffff;
+  stroke-width: 2;
 }
-.leaflet-tooltip.etiqueta-ciudad::before {
-  display: none;
-}
-.leaflet-popup-content-wrapper,
-.leaflet-popup-tip {
-  background: var(--popover);
-  color: var(--popover-foreground);
-  border-radius: var(--radius);
-}
-.leaflet-control-attribution {
-  font-size: 10px;
-}
-.dark .leaflet-control-attribution {
-  background: rgb(10 17 32 / 80%) !important;
-  color: #9aa8bd;
-}
-.dark .leaflet-control-attribution a {
-  color: #93c5fd;
+.provincia-ciudad[aria-disabled="true"] {
+  cursor: progress;
 }
 
 @media (prefers-reduced-motion: reduce) {

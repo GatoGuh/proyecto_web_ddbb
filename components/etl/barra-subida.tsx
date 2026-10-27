@@ -62,7 +62,7 @@ export function BarraSubida({
         </Button>
         <Button
           size="lg"
-          className="fondo-atardecer h-10 border-0 px-4 text-white shadow-sm disabled:opacity-50"
+          className="fondo-morado h-10 border-0 px-4 text-white shadow-sm disabled:opacity-50"
           disabled={motivoBloqueo !== null || subiendo}
           onClick={onSubir}
         >

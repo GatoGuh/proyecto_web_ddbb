@@ -29,26 +29,26 @@ const ESTADOS: Record<
     texto: "Pendiente",
     Icono: CircleDashedIcon,
     clase: "border-border text-muted-foreground",
-    icono: "text-slate-500",
+    icono: "text-zinc-400",
   },
   en_curso: {
     texto: "En curso",
     Icono: Loader2Icon,
     clase: "border-sky-600/40 bg-sky-500/10 text-sky-700 dark:text-sky-300",
-    icono: "text-sky-600",
+    icono: "text-sky-400",
   },
   completada: {
     texto: "Completada",
     Icono: CheckCircle2Icon,
     clase:
       "border-emerald-600/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300",
-    icono: "text-emerald-600",
+    icono: "text-emerald-400",
   },
   error: {
     texto: "Con errores",
     Icono: TriangleAlertIcon,
     clase: "border-destructive/50 bg-destructive/10 text-destructive",
-    icono: "text-red-600",
+    icono: "text-red-400",
   },
 }
 
@@ -70,7 +70,7 @@ export function EstadoEtiqueta({
     <span
       className={cn(
         "inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-xs font-medium whitespace-nowrap",
-        sobreColor ? "border-transparent bg-white text-slate-800" : clase,
+        sobreColor ? "border-white/10 bg-white/[0.06] text-zinc-100" : clase,
         className
       )}
     >

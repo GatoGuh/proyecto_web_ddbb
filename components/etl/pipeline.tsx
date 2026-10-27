@@ -42,7 +42,7 @@ export function Cabecera({
   onInspeccionar: (pestana: string) => void
 }) {
   return (
-    <header className="fondo-cielo text-white">
+    <header className="fondo-cabecera border-b text-white">
       <div className="mx-auto grid max-w-7xl gap-8 px-4 pt-8 pb-6 sm:px-6 lg:pt-10">
         <div className="flex flex-wrap items-start justify-between gap-6">
           <div className="max-w-2xl">
@@ -54,7 +54,7 @@ export function Cabecera({
               cada fase y guarda en Supabase solo los registros que elijas.
             </p>
           </div>
-          <div className="grid max-w-xs justify-items-start gap-1.5 rounded-md bg-white/10 p-3 ring-1 ring-white/20 sm:justify-items-end">
+          <div className="grid max-w-xs justify-items-start gap-1.5 rounded-md bg-white/[0.04] p-3 ring-1 ring-white/10 sm:justify-items-end">
             <span className="flex items-center gap-1.5 text-sm text-white/85">
               <DatabaseIcon aria-hidden className="size-4" />
               Base de datos de destino
@@ -80,16 +80,17 @@ export function Cabecera({
                   type="button"
                   onClick={() => onInspeccionar(f.pestana)}
                   className={cn(
-                    "flex w-full flex-col gap-2 rounded-md bg-white/10 p-3 text-left ring-1 ring-white/20 transition-colors hover:bg-white/[0.16] focus-visible:ring-2 focus-visible:ring-white focus-visible:outline-none",
-                    f.estado === "en_curso" && "bg-white/20 ring-white/60",
-                    f.estado === "error" && "ring-red-300/80"
+                    "flex w-full flex-col gap-2 rounded-md bg-white/[0.04] p-3 text-left ring-1 ring-white/10 transition-colors hover:bg-white/[0.08] focus-visible:ring-2 focus-visible:ring-violet-300 focus-visible:outline-none",
+                    f.estado === "en_curso" &&
+                      "bg-violet-500/10 ring-violet-400/70",
+                    f.estado === "error" && "ring-red-400/70"
                   )}
                 >
                   <span className="flex flex-wrap items-center justify-between gap-2">
                     <span className="flex items-center gap-2 font-semibold">
                       <span
                         aria-hidden
-                        className="grid size-6 place-items-center rounded-sm bg-white text-xs font-bold text-blue-900"
+                        className="fondo-morado grid size-6 place-items-center rounded-sm text-xs font-bold text-white"
                       >
                         {i + 1}
                       </span>
@@ -100,7 +101,7 @@ export function Cabecera({
                   <span className="text-xs leading-relaxed text-white/80">
                     {f.explicacion}
                   </span>
-                  <span className="mt-auto grid grid-cols-2 gap-2 rounded-sm bg-black/15 px-2 py-1.5 tabular-nums">
+                  <span className="mt-auto grid grid-cols-2 gap-2 rounded-sm bg-black/40 px-2 py-1.5 tabular-nums">
                     <Cifra titulo="Entrada" dato={f.entrada} />
                     <Cifra titulo="Salida" dato={f.salida} />
                   </span>
