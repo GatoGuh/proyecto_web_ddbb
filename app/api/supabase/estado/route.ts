@@ -1,6 +1,7 @@
 import {
   accesoPermitido,
   clienteSupabase,
+  credencialesQueFaltan,
   describirError,
   supabaseConfigurado,
   TABLA,
@@ -15,8 +16,7 @@ export async function GET() {
     return Response.json({
       configurado: false,
       tablaDisponible: false,
-      mensaje:
-        "Faltan las variables SUPABASE_URL y SUPABASE_SECRET_KEY en el servidor.",
+      mensaje: `Falta en el servidor: ${credencialesQueFaltan().join(" y ")}. Las variables nuevas solo se aplican tras volver a desplegar.`,
     })
   }
   try {

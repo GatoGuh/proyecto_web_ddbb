@@ -61,14 +61,20 @@ export function BancoEtl() {
 
   React.useEffect(() => {
     fetch("/api/supabase/estado")
-      .then((r) => r.json())
-      .then((e) =>
+      .then(async (r) => {
+        const e = await r.json()
         setEstadoSupabase(
           "configurado" in e
             ? e
-            : { configurado: false, tablaDisponible: false, mensaje: e.error }
+            : {
+                configurado: false,
+                tablaDisponible: false,
+                // 403: hay credenciales, pero el servidor bloquea el acceso.
+                bloqueado: r.status === 403,
+                mensaje: e.error ?? `HTTP ${r.status}`,
+              }
         )
-      )
+      })
       .catch(() =>
         setEstadoSupabase({
           configurado: false,
@@ -287,7 +293,7 @@ export function BancoEtl() {
   const motivoNoSubir = carga?.enCurso
     ? "Hay una carga en curso."
     : estadoSupabase !== null && !estadoSupabase.configurado
-      ? "Supabase no está configurado en el servidor."
+      ? estadoSupabase.mensaje
       : erroresFiltro.length > 0
         ? "Hay filtros no válidos: corrígelos antes de subir."
         : aCargar.length === 0
@@ -317,23 +323,30 @@ export function BancoEtl() {
             exactamente qué registros se guardan.
           </p>
         </div>
-        <div className="flex items-center gap-2 text-sm">
-          <span className="text-muted-foreground">Destino:</span>
-          {estadoSupabase === null ? (
-            <EstadoEtiqueta estado="en_curso" texto="Comprobando Supabase" />
-          ) : estadoSupabase.tablaDisponible ? (
-            <EstadoEtiqueta estado="completada" texto="Supabase listo" />
-          ) : (
-            <span title={estadoSupabase.mensaje}>
+        <div className="grid max-w-md justify-items-end gap-1 text-sm">
+          <div className="flex items-center gap-2">
+            <span className="text-muted-foreground">Destino:</span>
+            {estadoSupabase === null ? (
+              <EstadoEtiqueta estado="en_curso" texto="Comprobando Supabase" />
+            ) : estadoSupabase.tablaDisponible ? (
+              <EstadoEtiqueta estado="completada" texto="Supabase listo" />
+            ) : (
               <EstadoEtiqueta
                 estado="error"
                 texto={
-                  estadoSupabase.configurado
-                    ? "Tabla no disponible"
-                    : "Sin credenciales"
+                  estadoSupabase.bloqueado
+                    ? "Bloqueado en producción"
+                    : estadoSupabase.configurado
+                      ? "Tabla no disponible"
+                      : "Sin credenciales"
                 }
               />
-            </span>
+            )}
+          </div>
+          {estadoSupabase && !estadoSupabase.tablaDisponible && (
+            <p className="text-right text-xs text-destructive">
+              {estadoSupabase.mensaje}
+            </p>
           )}
         </div>
       </header>

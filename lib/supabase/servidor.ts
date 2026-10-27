@@ -9,16 +9,31 @@ export const TABLA = "mediciones_meteorologicas"
 // La clave secreta (sb_secret_…) omite RLS: solo puede usarse en el servidor.
 // Se acepta también el nombre que ya existía en .env.local de este proyecto.
 function leerConfiguracion() {
-  const url = process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL
-  const clave =
-    process.env.SUPABASE_SECRET_KEY ??
+  // `||` y `trim`: una variable definida pero vacía cuenta como ausente.
+  const url = (
+    process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL
+  )?.trim()
+  const clave = (
+    process.env.SUPABASE_SECRET_KEY ||
     process.env.NEXT_SECRET_SUPABASE_SERVICE_KEY
+  )?.trim()
   return { url, clave }
 }
 
 export function supabaseConfigurado() {
   const { url, clave } = leerConfiguracion()
   return Boolean(url && clave)
+}
+
+/** Describe qué credencial falta, sin revelar ningún valor. */
+export function credencialesQueFaltan(): string[] {
+  const { url, clave } = leerConfiguracion()
+  const faltan: string[] = []
+  if (!url) faltan.push("SUPABASE_URL (o NEXT_PUBLIC_SUPABASE_URL)")
+  if (!clave) {
+    faltan.push("SUPABASE_SECRET_KEY (o NEXT_SECRET_SUPABASE_SERVICE_KEY)")
+  }
+  return faltan
 }
 
 let cliente: SupabaseClient | null = null
@@ -52,7 +67,7 @@ export function accesoPermitido(): Response | null {
     return Response.json(
       {
         error:
-          "Endpoint deshabilitado en producción: añade autenticación antes de publicar la aplicación.",
+          "Acceso a Supabase deshabilitado en producción porque la aplicación no tiene autenticación. Para permitirlo, define ETL_PERMITIR_EN_PRODUCCION=true y vuelve a desplegar.",
       },
       { status: 403 }
     )
