@@ -1,8 +1,6 @@
 "use client"
 
 import * as React from "react"
-import { UploadCloudIcon } from "lucide-react"
-import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useCarga } from "@/hooks/use-carga"
 import { useExtraccion } from "@/hooks/use-extraccion"
@@ -15,10 +13,14 @@ import {
   type Orden,
 } from "@/lib/etl/filtrar"
 import { limpiarRegistros } from "@/lib/etl/limpiar"
+import { mediaDiariaTemperatura, resumirPorCiudad } from "@/lib/etl/resumen"
 import { claveRegistro, type RespuestaCiudad } from "@/lib/etl/tipos"
 import { transformarRespuestas } from "@/lib/etl/transformar"
-import { EstadoEtiqueta, formatoEntero, type EstadoFase } from "./comun"
+import { cn } from "@/lib/utils"
+import { BarraSubida } from "./barra-subida"
+import { formatoEntero, type EstadoFase } from "./comun"
 import { Configuracion } from "./configuracion"
+import { Embudo, GraficoLluvia, GraficoTemperatura } from "./graficos"
 import { PestanaCarga, type EstadoSupabase } from "./pestana-carga"
 import { PestanaSupabase } from "./pestana-supabase"
 import { PestanaValidos } from "./pestana-validos"
@@ -27,7 +29,8 @@ import {
   PestanaRechazados,
   PestanaTransformados,
 } from "./pestanas-datos"
-import { Contadores, Pipeline, type Fase } from "./pipeline"
+import { Cabecera, type Destino, type Fase } from "./pipeline"
+import { Seccion } from "./seccion"
 
 /** Ejecuta una función pura y mide su duración real. */
 function medir<T>(fn: () => T): { valor: T; duracionMs: number } {
@@ -42,7 +45,7 @@ export function BancoEtl() {
   ])
   const [inicio, setInicio] = React.useState("2026-09-01")
   const [fin, setFin] = React.useState("2026-09-30")
-  const [pestana, setPestana] = React.useState("json")
+  const [pestana, setPestana] = React.useState("validos")
   const [filtros, setFiltros] = React.useState<Filtros>(FILTROS_INICIALES)
   const [orden, setOrden] = React.useState<Orden>(ORDEN_INICIAL)
   const [seleccionBruta, setSeleccion] = React.useState<Set<string>>(
@@ -126,11 +129,24 @@ export function BancoEtl() {
     () => [...new Set(validos.map((r) => r.ciudad))],
     [validos]
   )
+  const resumen = React.useMemo(() => resumirPorCiudad(validos), [validos])
+  const temperaturaDiaria = React.useMemo(
+    () => mediaDiariaTemperatura(validos),
+    [validos]
+  )
+
+  // Abre una pestaña de la zona de datos y la lleva a la vista.
+  const irA = (p: string) => {
+    setPestana(p)
+    document
+      .getElementById("paso-eleccion")
+      ?.scrollIntoView({ behavior: "smooth", block: "start" })
+  }
 
   const nuevaExtraccion = () => {
     setSeleccion(new Set())
     setFiltros(FILTROS_INICIALES)
-    setPestana("json")
+    setPestana("validos")
     void extraer(ciudades, inicio, fin)
   }
 
@@ -173,34 +189,32 @@ export function BancoEtl() {
     {
       id: "extraccion",
       titulo: "Extracción",
-      explicacion:
-        "Una petición GET por ciudad a la API histórica de Open-Meteo (UTC, °C, mm). Se guarda el JSON original.",
+      explicacion: "Descarga una respuesta JSON por ciudad desde Open-Meteo.",
       estado: estadoExtraccion,
       entrada: {
         valor: extraccion ? peticiones.length : null,
-        etiqueta: "ciudades solicitadas",
+        etiqueta: "ciudades pedidas",
       },
       salida: {
         valor: extraccion ? respuestas.length : null,
-        etiqueta: "respuestas JSON correctas",
+        etiqueta: "respuestas correctas",
       },
       duracionMs: extraccion
         ? terminadas.reduce((n, p) => n + (p.duracionMs ?? 0), 0) || undefined
         : undefined,
-      nota: extraccion && (
-        <span className="text-muted-foreground">
-          {terminadas.length} procesadas ·{" "}
-          {peticiones.length - terminadas.length} pendientes
-          {conError.length > 0 && ` · ${conError.length} con error`}
-        </span>
-      ),
+      nota:
+        extraccion && terminadas.length < peticiones.length
+          ? `${terminadas.length} procesadas, ${peticiones.length - terminadas.length} pendientes`
+          : conError.length > 0
+            ? `${conError.length} con error: reinténtalas en el paso 1`
+            : undefined,
       pestana: "json",
     },
     {
       id: "transformacion",
       titulo: "Transformación",
       explicacion:
-        "Convierte los arrays paralelos de «hourly» en un registro por ciudad y hora, e interpreta la hora como UTC.",
+        "Convierte las listas de cada respuesta en una fila por ciudad y hora (UTC).",
       estado: !hayDatos
         ? "pendiente"
         : transformacion.valor.erroresEstructurales.length > 0
@@ -210,306 +224,294 @@ export function BancoEtl() {
         valor: hayDatos ? respuestas.length : null,
         etiqueta: "respuestas JSON",
       },
-      salida: { valor: hayDatos ? totalExtraido : null, etiqueta: "registros" },
+      salida: { valor: hayDatos ? totalExtraido : null, etiqueta: "filas" },
       duracionMs: hayDatos ? transformacion.duracionMs : undefined,
       nota:
-        transformacion.valor.avisos.length > 0 ? (
-          <span className="text-amber-700 dark:text-amber-400">
-            {transformacion.valor.avisos.length} aviso(s) de estructura
-          </span>
-        ) : undefined,
+        transformacion.valor.avisos.length > 0
+          ? `${transformacion.valor.avisos.length} aviso(s) de estructura`
+          : undefined,
       pestana: "transformados",
     },
     {
       id: "limpieza",
       titulo: "Limpieza",
       explicacion:
-        "Valida ciudad, fecha y mediciones (sin convertir nulos en 0), rangos de humedad y precipitación, y elimina duplicados.",
+        "Descarta filas con valores ausentes, nulos o imposibles, y los duplicados.",
       estado: totalExtraido === 0 ? "pendiente" : "completada",
-      entrada: {
-        valor: hayDatos ? totalExtraido : null,
-        etiqueta: "registros",
-      },
-      salida: { valor: hayDatos ? validos.length : null, etiqueta: "válidos" },
+      entrada: { valor: hayDatos ? totalExtraido : null, etiqueta: "filas" },
+      salida: { valor: hayDatos ? validos.length : null, etiqueta: "válidas" },
       duracionMs: hayDatos ? limpieza.duracionMs : undefined,
-      nota: hayDatos ? (
-        <span className="text-muted-foreground">
-          {formatoEntero(limpieza.valor.rechazados.length)} rechazados por
-          calidad
-        </span>
-      ) : undefined,
+      nota: hayDatos
+        ? `${formatoEntero(limpieza.valor.rechazados.length)} rechazadas por calidad`
+        : undefined,
       pestana: "rechazados",
     },
     {
       id: "filtrado",
       titulo: "Filtrado y selección",
       explicacion:
-        "Aplica tus filtros y orden a los válidos; tú eliges qué filas subir. Solo cuentan las seleccionadas que cumplen los filtros.",
+        "Tú decides qué filas se suben, con filtros y casillas de selección.",
       estado:
         validos.length === 0
           ? "pendiente"
           : erroresFiltro.length > 0
             ? "error"
             : "completada",
-      entrada: { valor: hayDatos ? validos.length : null, etiqueta: "válidos" },
+      entrada: { valor: hayDatos ? validos.length : null, etiqueta: "válidas" },
       salida: {
         valor: hayDatos ? aCargar.length : null,
-        etiqueta: "seleccionados para cargar",
+        etiqueta: "elegidas para subir",
       },
       duracionMs: validos.length > 0 ? conjunto.duracionMs : undefined,
-      nota: hayDatos ? (
-        <span className="text-muted-foreground">
-          {formatoEntero(coinciden.length)} coinciden con los filtros
-        </span>
-      ) : undefined,
+      nota: hayDatos
+        ? `${formatoEntero(coinciden.length)} cumplen los filtros`
+        : undefined,
       pestana: "validos",
     },
     {
       id: "carga",
       titulo: "Carga",
       explicacion:
-        "Upsert en Supabase por (ciudad, fecha_hora) en lotes de 500, desde el servidor. Después verifica que las claves existen.",
+        "Guarda las filas elegidas en Supabase, en lotes de 500, y comprueba que llegaron.",
       estado: estadoCarga,
       entrada: {
         valor: carga ? carga.congelados.length : null,
-        etiqueta: "registros congelados",
+        etiqueta: "enviadas",
       },
-      salida: { valor: confirmadosCarga, etiqueta: "confirmados por Supabase" },
+      salida: { valor: confirmadosCarga, etiqueta: "confirmadas" },
       duracionMs: carga?.duracionMs || undefined,
       nota:
-        carga?.verificacion?.estado === "completada" ? (
-          <span className="text-muted-foreground">
-            {formatoEntero(
-              carga.verificacion.comprobadas - carga.verificacion.faltan.length
-            )}{" "}
-            verificados en destino
-          </span>
-        ) : undefined,
+        carga?.verificacion?.estado === "completada"
+          ? `${formatoEntero(carga.verificacion.comprobadas - carga.verificacion.faltan.length)} verificadas en la tabla`
+          : undefined,
       pestana: "carga",
     },
   ]
 
-  // Mismas condiciones que el botón de la pestaña «Vista previa de la carga».
-  const motivoNoSubir = carga?.enCurso
-    ? "Hay una carga en curso."
+  const destino: Destino =
+    estadoSupabase === null
+      ? { estado: "en_curso", texto: "Comprobando Supabase…" }
+      : estadoSupabase.tablaDisponible
+        ? { estado: "completada", texto: "Supabase conectado" }
+        : {
+            estado: "error",
+            texto: estadoSupabase.bloqueado
+              ? "Bloqueado en producción"
+              : estadoSupabase.configurado
+                ? "Falta la tabla"
+                : "Sin credenciales",
+            detalle: estadoSupabase.mensaje,
+          }
+
+  // Mismas condiciones que el botón de la pestaña de subida.
+  const motivoBloqueo = carga?.enCurso
+    ? "Hay una subida en curso."
     : estadoSupabase !== null && !estadoSupabase.configurado
       ? estadoSupabase.mensaje
       : erroresFiltro.length > 0
         ? "Hay filtros no válidos: corrígelos antes de subir."
         : aCargar.length === 0
-          ? "Selecciona filas en la pestaña «Válidos» para poder subirlas."
-          : estadoSupabase?.configurado && !estadoSupabase.tablaDisponible
-            ? "Aviso: la tabla de destino no existe todavía; aplica la migración o la carga fallará."
-            : null
-  const puedeSubir =
-    !carga?.enCurso &&
-    !(estadoSupabase !== null && !estadoSupabase.configurado) &&
-    erroresFiltro.length === 0 &&
-    aCargar.length > 0
+          ? "Marca filas en «Elegir registros» para poder subirlas."
+          : null
+  const avisoSubida =
+    estadoSupabase?.configurado && !estadoSupabase.tablaDisponible
+      ? "La tabla de destino no existe todavía: aplica la migración o la subida fallará."
+      : null
 
   const pendientesLocales = aCargar.filter(
     (r) => !clavesConfirmadas.has(claveRegistro(r))
   ).length
 
   return (
-    <div className="mx-auto flex max-w-7xl flex-col gap-6 px-4 py-6 sm:px-6">
-      <header className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="text-xl font-semibold tracking-tight">
-            Primer pipeline ETL: Open-Meteo → Supabase
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            Extrae datos horarios, observa cómo cambian en cada fase y decide
-            exactamente qué registros se guardan.
-          </p>
-        </div>
-        <div className="grid max-w-md justify-items-end gap-1 text-sm">
-          <div className="flex items-center gap-2">
-            <span className="text-muted-foreground">Destino:</span>
-            {estadoSupabase === null ? (
-              <EstadoEtiqueta estado="en_curso" texto="Comprobando Supabase" />
-            ) : estadoSupabase.tablaDisponible ? (
-              <EstadoEtiqueta estado="completada" texto="Supabase listo" />
-            ) : (
-              <EstadoEtiqueta
-                estado="error"
-                texto={
-                  estadoSupabase.bloqueado
-                    ? "Bloqueado en producción"
-                    : estadoSupabase.configurado
-                      ? "Tabla no disponible"
-                      : "Sin credenciales"
-                }
+    <>
+      <Cabecera fases={fases} destino={destino} onInspeccionar={irA} />
+
+      <div
+        className={cn(
+          "mx-auto flex max-w-7xl flex-col gap-6 px-4 py-6 sm:px-6",
+          validos.length > 0 && "pb-40 sm:pb-28"
+        )}
+      >
+        <Configuracion
+          ciudades={ciudades}
+          setCiudades={setCiudades}
+          inicio={inicio}
+          setInicio={setInicio}
+          fin={fin}
+          setFin={setFin}
+          extraccion={extraccion}
+          enCurso={extrayendo}
+          resumen={resumen}
+          onExtraer={nuevaExtraccion}
+          onReintentar={(c) => void reintentar(c)}
+        />
+
+        {hayDatos && (
+          <Seccion
+            id="paso-datos"
+            numero={2}
+            titulo="Así son los datos"
+            descripcion="Cuántas filas quedan tras cada fase y cómo se comportan la temperatura y la lluvia en las ciudades descargadas."
+          >
+            <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
+              <div className="grid grid-cols-1 content-start gap-8">
+                <Embudo
+                  total={totalExtraido}
+                  filas={[
+                    {
+                      etiqueta: "Total extraído",
+                      valor: totalExtraido,
+                      ayuda: "Filas horarias recibidas de Open-Meteo.",
+                    },
+                    {
+                      etiqueta: "Válidos",
+                      valor: validos.length,
+                      ayuda: "Superan la limpieza.",
+                    },
+                    {
+                      etiqueta: "Rechazados",
+                      valor: limpieza.valor.rechazados.length,
+                      ayuda:
+                        "Descartados por calidad; el motivo está en «Rechazados».",
+                    },
+                    {
+                      etiqueta: "Coinciden con los filtros",
+                      valor: coinciden.length,
+                      ayuda: `${formatoEntero(validos.length - coinciden.length)} válidos quedan fuera por tus filtros.`,
+                    },
+                    {
+                      etiqueta: "Seleccionados para cargar",
+                      valor: aCargar.length,
+                      ayuda:
+                        seleccionFueraDeFiltros > 0
+                          ? `Hay además ${formatoEntero(seleccionFueraDeFiltros)} seleccionados fuera de los filtros, que no se subirán.`
+                          : "Seleccionados y dentro de los filtros: es lo que se sube.",
+                      destacada: true,
+                    },
+                  ]}
+                />
+                <GraficoLluvia resumen={[...resumen.values()]} />
+              </div>
+              <GraficoTemperatura
+                datos={temperaturaDiaria}
+                ciudades={ciudadesDisponibles}
               />
-            )}
-          </div>
-          {estadoSupabase && !estadoSupabase.tablaDisponible && (
-            <p className="text-right text-xs text-destructive">
-              {estadoSupabase.mensaje}
-            </p>
-          )}
-        </div>
-      </header>
+            </div>
+          </Seccion>
+        )}
 
-      <Configuracion
-        ciudades={ciudades}
-        setCiudades={setCiudades}
-        inicio={inicio}
-        setInicio={setInicio}
-        fin={fin}
-        setFin={setFin}
-        extraccion={extraccion}
-        enCurso={extrayendo}
-        onExtraer={nuevaExtraccion}
-        onReintentar={(c) => void reintentar(c)}
-      />
-
-      <Pipeline fases={fases} onInspeccionar={setPestana} />
-
-      <Contadores
-        contadores={[
-          {
-            etiqueta: "Total extraído",
-            valor: totalExtraido,
-            detalle: "registros horarios",
-          },
-          {
-            etiqueta: "Válidos",
-            valor: validos.length,
-            detalle: "superan la limpieza",
-          },
-          {
-            etiqueta: "Rechazados",
-            valor: limpieza.valor.rechazados.length,
-            detalle: "por calidad",
-          },
-          {
-            etiqueta: "Coinciden con los filtros",
-            valor: coinciden.length,
-            detalle: `${formatoEntero(validos.length - coinciden.length)} excluidos por filtros`,
-          },
-          {
-            etiqueta: "Seleccionados para cargar",
-            valor: aCargar.length,
-            detalle:
-              seleccionFueraDeFiltros > 0
-                ? `${formatoEntero(seleccionFueraDeFiltros)} seleccionados fuera de filtros`
-                : "seleccionados y dentro de filtros",
-            destacado: true,
-          },
-        ]}
-      />
-
-      <div className="flex flex-wrap items-center gap-3 rounded-xl border bg-card p-3">
-        <Button
-          size="lg"
-          disabled={!puedeSubir}
-          onClick={() => {
-            // Se muestra el informe por lotes mientras se sube.
-            setPestana("carga")
-            void iniciar(aCargar)
-          }}
+        <Seccion
+          id="paso-eleccion"
+          numero={hayDatos ? 3 : 2}
+          titulo="Elige qué subir y revisa el resultado"
+          descripcion="Filtra y marca las filas que quieres guardar, revisa la lista exacta que se enviará y consulta lo que ya está en Supabase."
         >
-          <UploadCloudIcon data-icon="inline-start" />
-          {carga?.enCurso
-            ? "Subiendo…"
-            : `Subir ${formatoEntero(aCargar.length)} registros a Supabase`}
-        </Button>
-        <p className="text-sm text-muted-foreground" aria-live="polite">
-          {motivoNoSubir ??
-            "Se enviarán las filas seleccionadas que cumplen los filtros, en el orden elegido."}
-        </p>
+          <Tabs value={pestana} onValueChange={(v) => setPestana(String(v))}>
+            <div className="-mx-1 overflow-x-auto px-1 pb-1">
+              <TabsList className="h-auto flex-wrap justify-start gap-y-1">
+                <TabsTrigger value="validos">
+                  Elegir registros ({formatoEntero(validos.length)})
+                </TabsTrigger>
+                <TabsTrigger value="carga">
+                  Revisar y subir ({formatoEntero(aCargar.length)})
+                </TabsTrigger>
+                <TabsTrigger value="supabase">Guardado en Supabase</TabsTrigger>
+                <span
+                  aria-hidden
+                  className="mx-2 hidden h-5 w-px bg-border sm:block"
+                />
+                <span className="px-1.5 text-xs text-muted-foreground">
+                  Detalles técnicos:
+                </span>
+                <TabsTrigger value="rechazados">
+                  Rechazados ({formatoEntero(limpieza.valor.rechazados.length)})
+                </TabsTrigger>
+                <TabsTrigger value="transformados">
+                  Transformados ({formatoEntero(totalExtraido)})
+                </TabsTrigger>
+                <TabsTrigger value="json">JSON original</TabsTrigger>
+              </TabsList>
+            </div>
+            <div className="pt-4">
+              <TabsContent value="validos">
+                <PestanaValidos
+                  validos={validos}
+                  coinciden={coinciden}
+                  erroresFiltro={erroresFiltro}
+                  filtros={filtros}
+                  setFiltros={setFiltros}
+                  orden={orden}
+                  setOrden={setOrden}
+                  seleccion={seleccion}
+                  setSeleccion={setSeleccion}
+                  seleccionFueraDeFiltros={seleccionFueraDeFiltros}
+                  aCargar={aCargar.length}
+                  ciudadesDisponibles={ciudadesDisponibles}
+                  clavesConfirmadas={clavesConfirmadas}
+                />
+              </TabsContent>
+              <TabsContent value="carga">
+                <PestanaCarga
+                  aCargar={aCargar}
+                  bloqueoFiltros={erroresFiltro.length > 0}
+                  carga={carga}
+                  estadoSupabase={estadoSupabase}
+                  onSubir={(simular) => void iniciar(aCargar, simular)}
+                  onReintentar={() => void reintentarFallidos()}
+                />
+              </TabsContent>
+              <TabsContent value="supabase">
+                <PestanaSupabase
+                  pendientesLocales={pendientesLocales}
+                  confirmadosSesion={clavesConfirmadas.size}
+                />
+              </TabsContent>
+              <TabsContent value="rechazados">
+                <PestanaRechazados
+                  rechazados={limpieza.valor.rechazados}
+                  excluidosPorFiltros={validos.length - coinciden.length}
+                />
+              </TabsContent>
+              <TabsContent value="transformados">
+                <PestanaTransformados resultado={transformacion.valor} />
+              </TabsContent>
+              <TabsContent value="json">
+                <PestanaJson extraccion={extraccion} />
+              </TabsContent>
+            </div>
+          </Tabs>
+        </Seccion>
+
+        <footer className="text-xs text-muted-foreground">
+          Datos meteorológicos de{" "}
+          <a
+            className="underline"
+            href="https://open-meteo.com/"
+            target="_blank"
+            rel="noreferrer"
+          >
+            Open-Meteo.com
+          </a>{" "}
+          (CC BY 4.0). Mapa: © colaboradores de OpenStreetMap. Herramienta
+          didáctica sin autenticación.
+        </footer>
       </div>
 
-      <section
-        aria-labelledby="titulo-inspeccion"
-        className="grid grid-cols-1 gap-3"
-      >
-        <h2 id="titulo-inspeccion" className="text-base font-semibold">
-          3. Inspección de datos
-        </h2>
-        <Tabs value={pestana} onValueChange={(v) => setPestana(String(v))}>
-          <div className="overflow-x-auto pb-1">
-            <TabsList>
-              <TabsTrigger value="json">JSON original</TabsTrigger>
-              <TabsTrigger value="transformados">
-                Transformados ({formatoEntero(totalExtraido)})
-              </TabsTrigger>
-              <TabsTrigger value="validos">
-                Válidos ({formatoEntero(validos.length)})
-              </TabsTrigger>
-              <TabsTrigger value="rechazados">
-                Rechazados ({formatoEntero(limpieza.valor.rechazados.length)})
-              </TabsTrigger>
-              <TabsTrigger value="carga">
-                Vista previa de la carga ({formatoEntero(aCargar.length)})
-              </TabsTrigger>
-              <TabsTrigger value="supabase">Datos en Supabase</TabsTrigger>
-            </TabsList>
-          </div>
-          <div className="rounded-xl border bg-card p-3 sm:p-4">
-            <TabsContent value="json">
-              <PestanaJson extraccion={extraccion} />
-            </TabsContent>
-            <TabsContent value="transformados">
-              <PestanaTransformados resultado={transformacion.valor} />
-            </TabsContent>
-            <TabsContent value="validos">
-              <PestanaValidos
-                validos={validos}
-                coinciden={coinciden}
-                erroresFiltro={erroresFiltro}
-                filtros={filtros}
-                setFiltros={setFiltros}
-                orden={orden}
-                setOrden={setOrden}
-                seleccion={seleccion}
-                setSeleccion={setSeleccion}
-                seleccionFueraDeFiltros={seleccionFueraDeFiltros}
-                aCargar={aCargar.length}
-                ciudadesDisponibles={ciudadesDisponibles}
-                clavesConfirmadas={clavesConfirmadas}
-              />
-            </TabsContent>
-            <TabsContent value="rechazados">
-              <PestanaRechazados
-                rechazados={limpieza.valor.rechazados}
-                excluidosPorFiltros={validos.length - coinciden.length}
-              />
-            </TabsContent>
-            <TabsContent value="carga">
-              <PestanaCarga
-                aCargar={aCargar}
-                bloqueoFiltros={erroresFiltro.length > 0}
-                carga={carga}
-                estadoSupabase={estadoSupabase}
-                onSubir={(simular) => void iniciar(aCargar, simular)}
-                onReintentar={() => void reintentarFallidos()}
-              />
-            </TabsContent>
-            <TabsContent value="supabase">
-              <PestanaSupabase
-                pendientesLocales={pendientesLocales}
-                confirmadosSesion={clavesConfirmadas.size}
-              />
-            </TabsContent>
-          </div>
-        </Tabs>
-      </section>
-
-      <footer className="text-xs text-muted-foreground">
-        Datos meteorológicos:{" "}
-        <a
-          className="underline"
-          href="https://open-meteo.com/"
-          target="_blank"
-          rel="noreferrer"
-        >
-          Open-Meteo.com
-        </a>{" "}
-        (CC BY 4.0). Herramienta didáctica sin autenticación: solo para
-        desarrollo local.
-      </footer>
-    </div>
+      {validos.length > 0 && (
+        <BarraSubida
+          aCargar={aCargar.length}
+          fueraDeFiltros={seleccionFueraDeFiltros}
+          subiendo={carga?.enCurso ?? false}
+          motivoBloqueo={motivoBloqueo}
+          aviso={avisoSubida}
+          onRevisar={() => irA("carga")}
+          onSubir={() => {
+            // Se muestra el informe por lotes mientras se sube.
+            irA("carga")
+            void iniciar(aCargar)
+          }}
+        />
+      )}
+    </>
   )
 }

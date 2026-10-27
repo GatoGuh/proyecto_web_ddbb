@@ -1,7 +1,7 @@
 "use client"
 
-import { ArrowDownIcon, ArrowRightIcon, SearchIcon } from "lucide-react"
 import * as React from "react"
+import { DatabaseIcon, SearchIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 import {
   EstadoEtiqueta,
@@ -22,122 +22,124 @@ export type Fase = {
   pestana: string
 }
 
-export function Pipeline({
+export type Destino = {
+  estado: EstadoFase
+  texto: string
+  detalle?: string
+}
+
+/**
+ * Cabecera: qué es la aplicación, a dónde se suben los datos y el recorrido
+ * de las cinco fases con sus contadores reales.
+ */
+export function Cabecera({
   fases,
+  destino,
   onInspeccionar,
 }: {
   fases: Fase[]
+  destino: Destino
   onInspeccionar: (pestana: string) => void
 }) {
   return (
-    <section
-      aria-labelledby="titulo-pipeline"
-      className="grid grid-cols-1 gap-3"
-    >
-      <h2 id="titulo-pipeline" className="text-base font-semibold">
-        2. Pipeline ETL
-      </h2>
-      <ol className="grid grid-cols-1 gap-2 lg:grid-cols-[repeat(5,minmax(0,1fr))] lg:gap-0">
-        {fases.map((f, i) => (
-          <li key={f.id} className="flex flex-col items-stretch lg:flex-row">
-            <article
-              className={cn(
-                "flex min-w-0 flex-1 flex-col gap-2 rounded-xl border bg-card p-3 text-sm ring-1 ring-foreground/5",
-                f.estado === "en_curso" && "border-sky-600/50",
-                f.estado === "error" && "border-destructive/50"
-              )}
-              aria-label={`Fase ${i + 1}: ${f.titulo}`}
-            >
-              <header className="flex flex-wrap items-center justify-between gap-1">
-                <h3 className="font-semibold">
-                  <span className="text-muted-foreground">{i + 1}.</span>{" "}
-                  {f.titulo}
-                </h3>
-                <EstadoEtiqueta estado={f.estado} />
-              </header>
-              <p className="text-xs leading-relaxed text-muted-foreground">
-                {f.explicacion}
+    <header className="fondo-cielo text-white">
+      <div className="mx-auto grid max-w-7xl gap-8 px-4 pt-8 pb-6 sm:px-6 lg:pt-10">
+        <div className="flex flex-wrap items-start justify-between gap-6">
+          <div className="max-w-2xl">
+            <h1 className="text-2xl font-semibold tracking-tight text-balance sm:text-3xl">
+              Pipeline ETL de datos meteorológicos
+            </h1>
+            <p className="mt-2 text-base text-white/85">
+              Descarga datos horarios de Open-Meteo, observa qué les ocurre en
+              cada fase y guarda en Supabase solo los registros que elijas.
+            </p>
+          </div>
+          <div className="grid max-w-xs justify-items-start gap-1.5 rounded-md bg-white/10 p-3 ring-1 ring-white/20 sm:justify-items-end">
+            <span className="flex items-center gap-1.5 text-sm text-white/85">
+              <DatabaseIcon aria-hidden className="size-4" />
+              Base de datos de destino
+            </span>
+            <EstadoEtiqueta
+              estado={destino.estado}
+              texto={destino.texto}
+              sobreColor
+            />
+            {destino.detalle && (
+              <p className="text-xs text-white/80 sm:text-right">
+                {destino.detalle}
               </p>
-              <dl className="mt-auto grid grid-cols-2 gap-1 rounded-lg bg-muted/50 p-2 tabular-nums">
-                <div>
-                  <dt className="text-xs text-muted-foreground">Entrada</dt>
-                  <dd className="font-semibold">
-                    {f.entrada.valor === null
-                      ? "—"
-                      : formatoEntero(f.entrada.valor)}
-                  </dd>
-                  <dd className="text-xs text-muted-foreground">
-                    {f.entrada.etiqueta}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-xs text-muted-foreground">Salida</dt>
-                  <dd className="font-semibold">
-                    {f.salida.valor === null
-                      ? "—"
-                      : formatoEntero(f.salida.valor)}
-                  </dd>
-                  <dd className="text-xs text-muted-foreground">
-                    {f.salida.etiqueta}
-                  </dd>
-                </div>
-              </dl>
-              {f.nota && <div className="text-xs">{f.nota}</div>}
-              <footer className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
-                <span>Duración: {formatoDuracion(f.duracionMs)}</span>
+            )}
+          </div>
+        </div>
+
+        <nav aria-label="Fases del pipeline">
+          <ol className="grid gap-2 lg:grid-cols-5 lg:gap-3">
+            {fases.map((f, i) => (
+              <li key={f.id} className="relative flex">
                 <button
                   type="button"
                   onClick={() => onInspeccionar(f.pestana)}
-                  className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 font-medium text-foreground underline-offset-2 hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                  className={cn(
+                    "flex w-full flex-col gap-2 rounded-md bg-white/10 p-3 text-left ring-1 ring-white/20 transition-colors hover:bg-white/[0.16] focus-visible:ring-2 focus-visible:ring-white focus-visible:outline-none",
+                    f.estado === "en_curso" && "bg-white/20 ring-white/60",
+                    f.estado === "error" && "ring-red-300/80"
+                  )}
                 >
-                  <SearchIcon aria-hidden className="size-3.5" />
-                  Inspeccionar
+                  <span className="flex flex-wrap items-center justify-between gap-2">
+                    <span className="flex items-center gap-2 font-semibold">
+                      <span
+                        aria-hidden
+                        className="grid size-6 place-items-center rounded-sm bg-white text-xs font-bold text-blue-900"
+                      >
+                        {i + 1}
+                      </span>
+                      {f.titulo}
+                    </span>
+                    <EstadoEtiqueta estado={f.estado} sobreColor />
+                  </span>
+                  <span className="text-xs leading-relaxed text-white/80">
+                    {f.explicacion}
+                  </span>
+                  <span className="mt-auto grid grid-cols-2 gap-2 rounded-sm bg-black/15 px-2 py-1.5 tabular-nums">
+                    <Cifra titulo="Entrada" dato={f.entrada} />
+                    <Cifra titulo="Salida" dato={f.salida} />
+                  </span>
+                  {f.nota && (
+                    <span className="text-xs text-white/85">{f.nota}</span>
+                  )}
+                  <span className="flex items-center justify-between text-xs text-white/75">
+                    <span>Duración: {formatoDuracion(f.duracionMs)}</span>
+                    <span className="inline-flex items-center gap-1 font-medium text-white">
+                      <SearchIcon aria-hidden className="size-3.5" />
+                      Ver datos
+                    </span>
+                  </span>
                 </button>
-              </footer>
-            </article>
-            {i < fases.length - 1 && (
-              <div
-                aria-hidden
-                className="flex items-center justify-center py-0.5 text-muted-foreground lg:px-1 lg:py-0"
-              >
-                <ArrowDownIcon className="size-4 lg:hidden" />
-                <ArrowRightIcon className="hidden size-4 lg:block" />
-              </div>
-            )}
-          </li>
-        ))}
-      </ol>
-    </section>
+              </li>
+            ))}
+          </ol>
+        </nav>
+      </div>
+    </header>
   )
 }
 
-export type Contador = {
-  etiqueta: string
-  valor: number
-  detalle?: string
-  destacado?: boolean
-}
-
-export function Contadores({ contadores }: { contadores: Contador[] }) {
+function Cifra({
+  titulo,
+  dato,
+}: {
+  titulo: string
+  dato: { valor: number | null; etiqueta: string }
+}) {
   return (
-    <dl className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
-      {contadores.map((c) => (
-        <div
-          key={c.etiqueta}
-          className={cn(
-            "rounded-xl border bg-card p-3",
-            c.destacado && "border-primary/60 ring-1 ring-primary/30"
-          )}
-        >
-          <dt className="text-xs text-muted-foreground">{c.etiqueta}</dt>
-          <dd className="text-2xl font-semibold tabular-nums">
-            {formatoEntero(c.valor)}
-          </dd>
-          {c.detalle && (
-            <dd className="text-xs text-muted-foreground">{c.detalle}</dd>
-          )}
-        </div>
-      ))}
-    </dl>
+    <span className="grid">
+      <span className="text-[11px] text-white/70">{titulo}</span>
+      <span className="text-base leading-tight font-semibold">
+        {dato.valor === null ? "—" : formatoEntero(dato.valor)}
+      </span>
+      <span className="text-[11px] leading-tight text-white/75">
+        {dato.etiqueta}
+      </span>
+    </span>
   )
 }
