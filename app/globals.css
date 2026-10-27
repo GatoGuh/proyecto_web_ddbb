@@ -62,14 +62,14 @@
   --card-foreground: #ececf1;
   --popover: #17171d;
   --popover-foreground: #ececf1;
-  --primary: #7c3aed;
-  --primary-foreground: #ffffff;
+  --primary: #e4e4ea;
+  --primary-foreground: #111116;
   --secondary: #1c1c24;
   --secondary-foreground: #ececf1;
   --muted: #18181f;
   --muted-foreground: #a1a1b0;
-  --accent: #231a3a;
-  --accent-foreground: #ddd6fe;
+  --accent: #26262f;
+  --accent-foreground: #ececf1;
   --destructive: #f87171;
   --border: #24242d;
   --input: #33333f;
@@ -83,27 +83,27 @@
   --radius: 0.25rem;
   --sidebar: #121217;
   --sidebar-foreground: #ececf1;
-  --sidebar-primary: #7c3aed;
-  --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #231a3a;
-  --sidebar-accent-foreground: #ddd6fe;
+  --sidebar-primary: #e4e4ea;
+  --sidebar-primary-foreground: #111116;
+  --sidebar-accent: #26262f;
+  --sidebar-accent-foreground: #ececf1;
   --sidebar-border: #24242d;
   --sidebar-ring: #8b5cf6;
 
-  /* Resaltados: una paleta índigo → violeta → púrpura, mostrada con una
-     forma distinta según el tipo de botón (ver utilidades morado-*). */
+  /* Resaltado: índigo → violeta → púrpura, reservado a las acciones
+     principales y a la línea de la pestaña activa. */
   --indigo: #4f46e5;
   --violeta: #7c3aed;
   --purpura: #a855f7;
   --resplandor:
     radial-gradient(
       900px 340px at 8% -10%,
-      rgb(124 58 237 / 32%),
+      rgb(124 58 237 / 18%),
       transparent 65%
     ),
     radial-gradient(
       700px 300px at 92% -20%,
-      rgb(79 70 229 / 26%),
+      rgb(79 70 229 / 14%),
       transparent 65%
     );
 
@@ -152,52 +152,14 @@
   background-position: 0% 50%;
   transition: background-position 600ms ease;
 }
-/* Pestaña activa y barras: horizontal. */
-@utility morado-horizontal {
-  background-image: linear-gradient(
-    90deg,
-    var(--indigo),
-    var(--violeta) 55%,
-    var(--purpura)
-  );
-}
-/* Opción elegida en un selector segmentado: vertical. */
-@utility morado-vertical {
-  background-image: linear-gradient(
-    180deg,
-    var(--purpura),
-    var(--violeta) 55%,
-    var(--indigo)
-  );
-}
-/* Chips de ciudad: radial, con el foco en --foco (distinto por ciudad). */
-@utility morado-radial {
-  background-image: radial-gradient(
-    circle at var(--foco, 0% 0%),
-    var(--purpura) 0%,
-    var(--violeta) 45%,
-    var(--indigo) 100%
-  );
-}
-/* Números de paso: cónico. */
-@utility morado-conico {
-  background-image: conic-gradient(
-    from 210deg at 30% 30%,
-    var(--indigo),
-    var(--violeta),
-    var(--purpura),
-    var(--violeta),
-    var(--indigo)
-  );
+/* Selección neutra: gris claro sólido (el morado queda para las acciones). */
+@utility solido-claro {
+  background-image: linear-gradient(180deg, #3a3a46 0%, #2c2c36 100%);
+  color: #ffffff;
 }
 @utility solido {
   background-image: linear-gradient(180deg, #23232c 0%, #18181f 100%);
   border-color: var(--input);
-}
-@utility solido-acento {
-  background-image: linear-gradient(118deg, #2c2257 0%, #1d1736 100%);
-  border-color: #4c3d8f;
-  color: #e4dcff;
 }
 @utility solido-azul {
   background-image: linear-gradient(118deg, #1e3a8a 0%, #1d4ed8 100%);
@@ -230,9 +192,7 @@
 button.fondo-morado:not(:disabled):hover {
   background-position: 100% 50%;
 }
-button.morado-radial:not(:disabled):hover,
-button.morado-vertical:not(:disabled):hover,
-[data-active].morado-horizontal:hover {
+button.solido-claro:not(:disabled):hover {
   filter: brightness(1.12);
 }
 button.solido:not(:disabled):hover {

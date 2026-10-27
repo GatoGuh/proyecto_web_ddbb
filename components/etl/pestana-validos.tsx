@@ -179,7 +179,7 @@ export function PestanaValidos(props: Props) {
           <li key={t} className="flex gap-2 rounded-md solido p-2.5">
             <span
               aria-hidden
-              className="grid size-6 shrink-0 place-items-center rounded-sm morado-conico text-sm font-bold text-white"
+              className="grid size-6 shrink-0 place-items-center rounded-sm solido-claro text-sm font-bold"
             >
               {i + 1}
             </span>
@@ -314,7 +314,7 @@ export function PestanaValidos(props: Props) {
         )}
       </div>
 
-      <div className="flex flex-wrap items-center gap-2 rounded-lg border solido-acento p-3">
+      <div className="flex flex-wrap items-center gap-2 rounded-lg solido p-3">
         <p className="text-sm" aria-live="polite">
           <strong className="text-base tabular-nums">
             {formatoEntero(props.aCargar)}
