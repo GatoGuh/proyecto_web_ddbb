@@ -27,6 +27,7 @@
   --color-chart-1: var(--chart-1);
   --color-ring: var(--ring);
   --color-input: var(--input);
+  --color-campo: var(--campo);
   --color-border: var(--border);
   --color-destructive: var(--destructive);
   --color-accent-foreground: var(--accent-foreground);
@@ -70,8 +71,9 @@
   --accent: #231a3a;
   --accent-foreground: #ddd6fe;
   --destructive: #f87171;
-  --border: rgb(255 255 255 / 8%);
-  --input: rgb(255 255 255 / 14%);
+  --border: #24242d;
+  --input: #33333f;
+  --campo: #15151b;
   --ring: #8b5cf6;
   --chart-1: #4e7cb7;
   --chart-2: #58a576;
@@ -85,7 +87,7 @@
   --sidebar-primary-foreground: #ffffff;
   --sidebar-accent: #231a3a;
   --sidebar-accent-foreground: #ddd6fe;
-  --sidebar-border: rgb(255 255 255 / 8%);
+  --sidebar-border: #24242d;
   --sidebar-ring: #8b5cf6;
 
   /* Resaltados: un único degradado índigo → violeta. */
@@ -137,17 +139,57 @@
   }
 }
 
-@layer components {
-  .fondo-morado {
-    background-image: var(--morado);
-  }
-  button.fondo-morado:not(:disabled):hover {
-    background-image: var(--morado-hover);
-  }
-  .fondo-cabecera {
-    background-color: var(--background);
-    background-image: var(--resplandor);
-  }
+/* Sólidos con degradado (sustituyen a los fondos semitransparentes).
+   Se declaran con @utility para admitir variantes como hover: o data-active:. */
+@utility fondo-morado {
+  background-image: var(--morado);
+}
+@utility solido {
+  background-image: linear-gradient(180deg, #23232c 0%, #18181f 100%);
+  border-color: var(--input);
+}
+@utility solido-acento {
+  background-image: linear-gradient(118deg, #2c2257 0%, #1d1736 100%);
+  border-color: #4c3d8f;
+  color: #e4dcff;
+}
+@utility solido-azul {
+  background-image: linear-gradient(118deg, #1e3a8a 0%, #1d4ed8 100%);
+  border-color: #3b6fe0;
+  color: #eff6ff;
+}
+@utility solido-verde {
+  background-image: linear-gradient(118deg, #065f46 0%, #047857 100%);
+  border-color: #109a72;
+  color: #ecfdf5;
+}
+@utility solido-rojo {
+  background-image: linear-gradient(118deg, #7f1d1d 0%, #b91c1c 100%);
+  border-color: #d93a3a;
+  color: #fef2f2;
+}
+@utility caja-error {
+  background-image: linear-gradient(180deg, #2a1215 0%, #1d0e11 100%);
+  border-color: #7f1d1d;
+}
+@utility fondo-barra {
+  background-image: linear-gradient(180deg, #17171e 0%, #0e0e12 100%);
+}
+@utility fondo-cabecera {
+  background-color: var(--background);
+  background-image: var(--resplandor);
+}
+
+/* Estados hover de los botones con degradado. */
+button.fondo-morado:not(:disabled):hover,
+button[data-active].fondo-morado:hover {
+  background-image: var(--morado-hover);
+}
+button.solido:not(:disabled):hover {
+  background-image: linear-gradient(180deg, #2c2c37 0%, #1f1f27 100%);
+}
+button.solido-rojo:not(:disabled):hover {
+  background-image: linear-gradient(118deg, #8f2222 0%, #c92323 100%);
 }
 
 /* Mapa de provincias (SVG). */

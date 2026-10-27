@@ -40,7 +40,7 @@ const fechaCorta = (iso: string) =>
   `${Number(iso.slice(8, 10))} ${MESES[Number(iso.slice(5, 7)) - 1]}`
 
 // Estilo del texto de los ejes (sin trazo, para que no se vea borroso).
-const EJE = { fontSize: 12, fill: "var(--muted-foreground)" }
+const EJE = { fontSize: 14, fill: "var(--muted-foreground)" }
 
 /* ------------------------------------------------------------------ */
 /* Embudo: los cinco contadores del pipeline como barras comparables   */
@@ -49,7 +49,7 @@ const EJE = { fontSize: 12, fill: "var(--muted-foreground)" }
 export type FilaEmbudo = {
   etiqueta: string
   valor: number
-  ayuda: string
+  ayuda?: string
   destacada?: boolean
 }
 
@@ -87,7 +87,9 @@ export function Embudo({
                   style={{ width: `${Math.max(pct, f.valor > 0 ? 1 : 0)}%` }}
                 />
               </div>
-              <dd className="text-xs text-muted-foreground">{f.ayuda}</dd>
+              {f.ayuda && (
+                <dd className="text-sm text-muted-foreground">{f.ayuda}</dd>
+              )}
             </div>
           )
         })}
@@ -102,7 +104,7 @@ export function Embudo({
 
 function Leyenda({ ciudades }: { ciudades: string[] }) {
   return (
-    <ul className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+    <ul className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
       {ciudades.map((c) => (
         <li key={c} className="flex items-center gap-1.5">
           <span
@@ -132,7 +134,7 @@ function CabeceraGrafico({
     <div className="flex flex-wrap items-start justify-between gap-2">
       <div>
         <h3 className="text-sm font-semibold">{titulo}</h3>
-        <p className="text-xs text-muted-foreground">{subtitulo}</p>
+        <p className="text-sm text-muted-foreground">{subtitulo}</p>
       </div>
       <Button
         variant="ghost"
@@ -161,7 +163,7 @@ function CajaTooltip({
   filas: { clave: string; valor: string }[]
 }) {
   return (
-    <div className="min-w-36 rounded-md border bg-popover px-3 py-2 text-xs shadow-md">
+    <div className="min-w-36 rounded-md border bg-popover px-3 py-2 text-sm shadow-md">
       <p className="mb-1 font-semibold">{titulo}</p>
       <ul className="grid gap-0.5">
         {filas.map((f) => (
@@ -203,7 +205,7 @@ export function GraficoTemperatura({
       <Leyenda ciudades={ciudades} />
       {verTabla ? (
         <div className="max-h-[26rem] overflow-auto rounded-md border">
-          <table className="w-full text-xs tabular-nums">
+          <table className="w-full text-sm tabular-nums">
             <thead className="sticky top-0 bg-card">
               <tr>
                 <th className="px-2 py-1.5 text-left font-medium">Día</th>
@@ -248,14 +250,14 @@ export function GraficoTemperatura({
                 tick={EJE}
                 stroke="var(--eje)"
                 tickLine={false}
-                minTickGap={24}
+                minTickGap={44}
               />
               <YAxis
                 tick={EJE}
                 stroke="var(--eje)"
                 tickLine={false}
                 axisLine={false}
-                width={44}
+                width={50}
                 domain={["auto", "auto"]}
                 tickFormatter={(v: number) => `${v}°`}
               />
@@ -315,7 +317,7 @@ export function GraficoLluvia({ resumen }: { resumen: ResumenCiudad[] }) {
         setVerTabla={setVerTabla}
       />
       {verTabla ? (
-        <table className="w-full text-xs tabular-nums">
+        <table className="w-full text-sm tabular-nums">
           <thead>
             <tr>
               <th className="py-1.5 text-left font-medium">Ciudad</th>
@@ -346,7 +348,7 @@ export function GraficoLluvia({ resumen }: { resumen: ResumenCiudad[] }) {
             <BarChart
               data={datos}
               layout="vertical"
-              margin={{ top: 0, right: 64, bottom: 0, left: 0 }}
+              margin={{ top: 0, right: 76, bottom: 0, left: 0 }}
               barCategoryGap={8}
             >
               <XAxis type="number" hide domain={[0, "dataMax"]} />
@@ -356,7 +358,7 @@ export function GraficoLluvia({ resumen }: { resumen: ResumenCiudad[] }) {
                 tick={{ ...EJE, fill: "var(--foreground)" }}
                 tickLine={false}
                 axisLine={{ stroke: "var(--eje)" }}
-                width={78}
+                width={90}
               />
               <Tooltip
                 cursor={{ fill: "var(--muted)" }}
@@ -389,7 +391,7 @@ export function GraficoLluvia({ resumen }: { resumen: ResumenCiudad[] }) {
                   dataKey="lluvia"
                   position="right"
                   formatter={(v: unknown) => `${formatoDecimal(Number(v))} mm`}
-                  style={{ fill: "var(--foreground)", fontSize: 12 }}
+                  style={{ fill: "var(--foreground)", fontSize: 14 }}
                 />
               </Bar>
             </BarChart>

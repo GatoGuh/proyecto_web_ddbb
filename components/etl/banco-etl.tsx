@@ -17,6 +17,7 @@ import { mediaDiariaTemperatura, resumirPorCiudad } from "@/lib/etl/resumen"
 import { claveRegistro, type RespuestaCiudad } from "@/lib/etl/tipos"
 import { transformarRespuestas } from "@/lib/etl/transformar"
 import { cn } from "@/lib/utils"
+import { Button } from "@/components/ui/button"
 import { BarraSubida } from "./barra-subida"
 import { formatoEntero, type EstadoFase } from "./comun"
 import { Configuracion } from "./configuracion"
@@ -32,6 +33,13 @@ import {
 import { Cabecera, type Destino, type Fase } from "./pipeline"
 import { Seccion } from "./seccion"
 
+const DETALLES = [
+  { id: "rechazados", titulo: "Rechazados" },
+  { id: "transformados", titulo: "Transformados" },
+  { id: "json", titulo: "JSON original" },
+] as const
+type Detalle = (typeof DETALLES)[number]["id"]
+
 /** Ejecuta una función pura y mide su duración real. */
 function medir<T>(fn: () => T): { valor: T; duracionMs: number } {
   const t0 = performance.now()
@@ -46,6 +54,8 @@ export function BancoEtl() {
   const [inicio, setInicio] = React.useState("2026-09-01")
   const [fin, setFin] = React.useState("2026-09-30")
   const [pestana, setPestana] = React.useState("validos")
+  const [detalle, setDetalle] = React.useState<Detalle>("rechazados")
+  const [simularFallo, setSimularFallo] = React.useState(false)
   const [filtros, setFiltros] = React.useState<Filtros>(FILTROS_INICIALES)
   const [orden, setOrden] = React.useState<Orden>(ORDEN_INICIAL)
   const [seleccionBruta, setSeleccion] = React.useState<Set<string>>(
@@ -135,9 +145,12 @@ export function BancoEtl() {
     [validos]
   )
 
-  // Abre una pestaña de la zona de datos y la lleva a la vista.
+  // Abre una pestaña de la zona de datos y la lleva a la vista. Las vistas
+  // técnicas viven dentro de la pestaña «Detalles técnicos».
   const irA = (p: string) => {
-    setPestana(p)
+    const tecnica = DETALLES.find((d) => d.id === p)
+    if (tecnica) setDetalle(tecnica.id)
+    setPestana(tecnica ? "tecnicos" : p)
     document
       .getElementById("paso-eleccion")
       ?.scrollIntoView({ behavior: "smooth", block: "start" })
@@ -361,18 +374,15 @@ export function BancoEtl() {
                     {
                       etiqueta: "Total extraído",
                       valor: totalExtraido,
-                      ayuda: "Filas horarias recibidas de Open-Meteo.",
                     },
                     {
                       etiqueta: "Válidos",
                       valor: validos.length,
-                      ayuda: "Superan la limpieza.",
                     },
                     {
                       etiqueta: "Rechazados",
                       valor: limpieza.valor.rechazados.length,
-                      ayuda:
-                        "Descartados por calidad; el motivo está en «Rechazados».",
+                      ayuda: "Motivos en «Detalles técnicos».",
                     },
                     {
                       etiqueta: "Coinciden con los filtros",
@@ -385,7 +395,7 @@ export function BancoEtl() {
                       ayuda:
                         seleccionFueraDeFiltros > 0
                           ? `Hay además ${formatoEntero(seleccionFueraDeFiltros)} seleccionados fuera de los filtros, que no se subirán.`
-                          : "Seleccionados y dentro de los filtros: es lo que se sube.",
+                          : undefined,
                       destacada: true,
                     },
                   ]}
@@ -416,20 +426,7 @@ export function BancoEtl() {
                   Revisar y subir ({formatoEntero(aCargar.length)})
                 </TabsTrigger>
                 <TabsTrigger value="supabase">Guardado en Supabase</TabsTrigger>
-                <span
-                  aria-hidden
-                  className="mx-2 hidden h-5 w-px bg-border sm:block"
-                />
-                <span className="px-1.5 text-xs text-muted-foreground">
-                  Detalles técnicos:
-                </span>
-                <TabsTrigger value="rechazados">
-                  Rechazados ({formatoEntero(limpieza.valor.rechazados.length)})
-                </TabsTrigger>
-                <TabsTrigger value="transformados">
-                  Transformados ({formatoEntero(totalExtraido)})
-                </TabsTrigger>
-                <TabsTrigger value="json">JSON original</TabsTrigger>
+                <TabsTrigger value="tecnicos">Detalles técnicos</TabsTrigger>
               </TabsList>
             </div>
             <div className="pt-4">
@@ -456,7 +453,8 @@ export function BancoEtl() {
                   bloqueoFiltros={erroresFiltro.length > 0}
                   carga={carga}
                   estadoSupabase={estadoSupabase}
-                  onSubir={(simular) => void iniciar(aCargar, simular)}
+                  simularFallo={simularFallo}
+                  setSimularFallo={setSimularFallo}
                   onReintentar={() => void reintentarFallidos()}
                 />
               </TabsContent>
@@ -466,23 +464,45 @@ export function BancoEtl() {
                   confirmadosSesion={clavesConfirmadas.size}
                 />
               </TabsContent>
-              <TabsContent value="rechazados">
-                <PestanaRechazados
-                  rechazados={limpieza.valor.rechazados}
-                  excluidosPorFiltros={validos.length - coinciden.length}
-                />
-              </TabsContent>
-              <TabsContent value="transformados">
-                <PestanaTransformados resultado={transformacion.valor} />
-              </TabsContent>
-              <TabsContent value="json">
-                <PestanaJson extraccion={extraccion} />
+              <TabsContent value="tecnicos">
+                <div
+                  role="radiogroup"
+                  aria-label="Vista técnica"
+                  className="mb-4 inline-flex flex-wrap rounded-md border p-0.5"
+                >
+                  {DETALLES.map((d) => (
+                    <Button
+                      key={d.id}
+                      size="sm"
+                      role="radio"
+                      aria-checked={detalle === d.id}
+                      variant={detalle === d.id ? "default" : "ghost"}
+                      onClick={() => setDetalle(d.id)}
+                    >
+                      {d.titulo}
+                      {d.id === "rechazados" &&
+                        ` (${formatoEntero(limpieza.valor.rechazados.length)})`}
+                      {d.id === "transformados" &&
+                        ` (${formatoEntero(totalExtraido)})`}
+                    </Button>
+                  ))}
+                </div>
+                {detalle === "rechazados" && (
+                  <PestanaRechazados
+                    rechazados={limpieza.valor.rechazados}
+                    excluidosPorFiltros={validos.length - coinciden.length}
+                  />
+                )}
+                {detalle === "transformados" && (
+                  <PestanaTransformados resultado={transformacion.valor} />
+                )}
+                {detalle === "json" && <PestanaJson extraccion={extraccion} />}
               </TabsContent>
             </div>
           </Tabs>
         </Seccion>
 
-        <footer className="text-xs text-muted-foreground">
+        <footer className="text-sm text-muted-foreground">
           Datos meteorológicos de{" "}
           <a
             className="underline"
@@ -508,7 +528,7 @@ export function BancoEtl() {
           onSubir={() => {
             // Se muestra el informe por lotes mientras se sube.
             irA("carga")
-            void iniciar(aCargar)
+            void iniciar(aCargar, simularFallo)
           }}
         />
       )}

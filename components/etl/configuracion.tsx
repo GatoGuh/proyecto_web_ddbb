@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { CIUDADES, colorCiudad } from "@/lib/etl/ciudades"
-import { TAMANO_LOTE } from "@/lib/etl/carga"
 import {
   diasInclusivos,
   MAX_DIAS_EXTRACCION,
@@ -80,7 +79,7 @@ export function Configuracion({
     >
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
         <div className="grid grid-cols-1 gap-3">
-          <div className="rounded-lg border bg-background/60 p-2 sm:p-4">
+          <div className="rounded-lg border bg-card p-2 sm:p-4">
             <MapaCiudades
               seleccionadas={ciudades}
               onAlternar={alternar}
@@ -139,24 +138,9 @@ export function Configuracion({
               />
             </div>
           </div>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-sm text-muted-foreground">
             Fechas en hora UTC. Máximo {MAX_DIAS_EXTRACCION} días por descarga.
           </p>
-
-          <div className="rounded-lg border bg-muted/50 p-4">
-            <p className="text-sm text-muted-foreground">Vas a descargar</p>
-            <p className="text-3xl font-semibold tracking-tight tabular-nums">
-              {formatoEntero(previstos)}{" "}
-              <span className="text-base font-medium text-muted-foreground">
-                registros horarios
-              </span>
-            </p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {ciudades.length} {ciudades.length === 1 ? "ciudad" : "ciudades"}{" "}
-              × {dias && dias > 0 ? dias : 0} días × 24 horas. Una petición por
-              ciudad; se suben en lotes de hasta {TAMANO_LOTE}.
-            </p>
-          </div>
 
           {errores.length > 0 && (
             <ul role="alert" className="grid gap-1 text-sm text-destructive">
@@ -168,13 +152,18 @@ export function Configuracion({
 
           <Button
             size="lg"
-            className="fondo-morado h-11 border-0 text-base text-white"
+            className="h-11 border-0 fondo-morado text-base text-white"
             onClick={onExtraer}
             disabled={enCurso || errores.length > 0}
           >
             <DownloadCloudIcon data-icon="inline-start" />
             {enCurso ? "Descargando…" : "Descargar datos"}
           </Button>
+          <p className="-mt-2 text-sm text-muted-foreground tabular-nums">
+            {formatoEntero(previstos)} registros horarios ({ciudades.length}{" "}
+            {ciudades.length === 1 ? "ciudad" : "ciudades"} ×{" "}
+            {dias && dias > 0 ? dias : 0} días × 24 h)
+          </p>
 
           {extraccion && (
             <div className="grid gap-2" aria-live="polite">
@@ -205,7 +194,7 @@ export function Configuracion({
                             : undefined
                       }
                     />
-                    <span className="ml-auto text-xs text-muted-foreground tabular-nums">
+                    <span className="ml-auto text-sm text-muted-foreground tabular-nums">
                       {p.duracionMs !== undefined &&
                         formatoDuracion(p.duracionMs)}
                     </span>
@@ -215,7 +204,7 @@ export function Configuracion({
               {fallidas.map((p) => (
                 <div
                   key={p.ciudad}
-                  className="flex flex-wrap items-center gap-2 rounded-md border border-destructive/40 p-2 text-sm"
+                  className="flex flex-wrap items-center gap-2 rounded-md border caja-error p-2 text-sm"
                 >
                   <span className="text-destructive">
                     {p.ciudad}: {p.error}
