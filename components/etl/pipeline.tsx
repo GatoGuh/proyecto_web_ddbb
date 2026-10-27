@@ -114,7 +114,7 @@ function Paso({
         onClick={onPulsar}
         aria-describedby={id}
         className={cn(
-          "inline-flex h-8 items-center gap-2 rounded-md border px-2.5 text-sm font-medium transition-[filter] hover:brightness-125 focus-visible:ring-3 focus-visible:ring-ring/60 focus-visible:outline-none",
+          "inline-flex h-8 items-center gap-2 rounded-md px-2.5 text-sm font-medium transition-[filter] hover:brightness-125 focus-visible:ring-3 focus-visible:ring-ring/60 focus-visible:outline-none",
           COLOR_PASO[f.estado]
         )}
       >

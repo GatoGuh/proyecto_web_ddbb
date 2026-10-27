@@ -165,6 +165,7 @@ export function PestanaValidos(props: Props) {
   const hayFiltros =
     avanzadosActivos > 0 || filtros.soloLluvia || filtros.ciudades !== null
   const marcadasCiudad = filtros.ciudades ?? ciudadesDisponibles
+  const todasMarcadas = coinciden.every((r) => seleccion.has(claveRegistro(r)))
   const columnaOrden = COLUMNAS.find((c) => c.campo === orden.campo)?.titulo
 
   return (
@@ -175,7 +176,7 @@ export function PestanaValidos(props: Props) {
           "Marca las filas que quieres subir, una a una o todas las filtradas.",
           "Revisa la lista final en «Revisar y subir» y súbela.",
         ].map((t, i) => (
-          <li key={t} className="flex gap-2 rounded-md border solido p-2.5">
+          <li key={t} className="flex gap-2 rounded-md solido p-2.5">
             <span
               aria-hidden
               className="grid size-6 shrink-0 place-items-center rounded-sm fondo-morado text-sm font-bold text-white"
@@ -329,15 +330,18 @@ export function PestanaValidos(props: Props) {
         <div className="ml-auto flex flex-wrap gap-2">
           <Button
             size="sm"
+            variant="outline"
             onClick={() =>
               setSeleccion(
                 new Set([...seleccion, ...coinciden.map(claveRegistro)])
               )
             }
-            disabled={coinciden.length === 0}
+            disabled={coinciden.length === 0 || todasMarcadas}
           >
             <CheckSquareIcon data-icon="inline-start" />
-            Marcar las {formatoEntero(coinciden.length)} filtradas
+            {todasMarcadas && coinciden.length > 0
+              ? `Las ${formatoEntero(coinciden.length)} filtradas ya están marcadas`
+              : `Marcar las ${formatoEntero(coinciden.length)} filtradas`}
           </Button>
           {seleccionFueraDeFiltros > 0 && (
             <Button
@@ -369,7 +373,7 @@ export function PestanaValidos(props: Props) {
         <div
           role="radiogroup"
           aria-label="Filas a mostrar"
-          className="inline-flex rounded-md border p-0.5"
+          className="inline-flex gap-0.5 rounded-md bg-muted p-0.5"
         >
           <Button
             size="sm"

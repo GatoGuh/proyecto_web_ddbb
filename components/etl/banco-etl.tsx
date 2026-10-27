@@ -468,7 +468,7 @@ export function BancoEtl() {
                 <div
                   role="radiogroup"
                   aria-label="Vista técnica"
-                  className="mb-4 inline-flex flex-wrap rounded-md border p-0.5"
+                  className="mb-4 inline-flex flex-wrap gap-0.5 rounded-md bg-muted p-0.5"
                 >
                   {DETALLES.map((d) => (
                     <Button

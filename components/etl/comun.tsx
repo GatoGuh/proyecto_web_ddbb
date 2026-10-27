@@ -3,7 +3,6 @@
 import * as React from "react"
 import {
   CheckCircle2Icon,
-  CheckIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
   CircleDashedIcon,
@@ -59,7 +58,7 @@ export function EstadoEtiqueta({
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-sm font-medium whitespace-nowrap",
+        "inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-sm font-medium whitespace-nowrap",
         clase,
         className
       )}
@@ -257,9 +256,9 @@ export function ChipCiudad({
       disabled={disabled}
       onClick={onClick}
       className={cn(
-        "inline-flex h-8 items-center gap-2 rounded-md border px-3 text-sm font-medium transition-colors focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none disabled:opacity-50",
+        "inline-flex h-8 items-center gap-2 rounded-md px-3 text-sm font-medium transition-colors focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none disabled:opacity-50",
         marcada
-          ? "border-transparent fondo-morado text-white"
+          ? "fondo-morado text-white"
           : "solido text-muted-foreground hover:text-foreground"
       )}
     >
@@ -272,7 +271,6 @@ export function ChipCiudad({
         }}
       />
       {ciudad}
-      {marcada && <CheckIcon aria-hidden className="size-3.5" />}
     </button>
   )
 }
