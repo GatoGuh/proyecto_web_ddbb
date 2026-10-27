@@ -476,7 +476,7 @@ export function BancoEtl() {
                       size="sm"
                       role="radio"
                       aria-checked={detalle === d.id}
-                      variant={detalle === d.id ? "default" : "ghost"}
+                      variant={detalle === d.id ? "seleccion" : "ghost"}
                       onClick={() => setDetalle(d.id)}
                     >
                       {d.titulo}

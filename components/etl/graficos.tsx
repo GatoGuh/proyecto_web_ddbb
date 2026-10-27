@@ -82,7 +82,7 @@ export function Embudo({
                 <div
                   className={cn(
                     "h-2 rounded-sm transition-[width] duration-500",
-                    f.destacada ? "fondo-morado" : "bg-zinc-600"
+                    f.destacada ? "morado-horizontal" : "bg-zinc-600"
                   )}
                   style={{ width: `${Math.max(pct, f.valor > 0 ? 1 : 0)}%` }}
                 />

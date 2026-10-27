@@ -179,7 +179,7 @@ export function PestanaValidos(props: Props) {
           <li key={t} className="flex gap-2 rounded-md solido p-2.5">
             <span
               aria-hidden
-              className="grid size-6 shrink-0 place-items-center rounded-sm fondo-morado text-sm font-bold text-white"
+              className="grid size-6 shrink-0 place-items-center rounded-sm morado-conico text-sm font-bold text-white"
             >
               {i + 1}
             </span>
@@ -379,7 +379,7 @@ export function PestanaValidos(props: Props) {
             size="sm"
             role="radio"
             aria-checked={vista === "coinciden"}
-            variant={vista === "coinciden" ? "default" : "ghost"}
+            variant={vista === "coinciden" ? "seleccion" : "ghost"}
             onClick={() => setVista("coinciden")}
           >
             Cumplen los filtros ({formatoEntero(coinciden.length)})
@@ -388,7 +388,7 @@ export function PestanaValidos(props: Props) {
             size="sm"
             role="radio"
             aria-checked={vista === "excluidos"}
-            variant={vista === "excluidos" ? "default" : "ghost"}
+            variant={vista === "excluidos" ? "seleccion" : "ghost"}
             onClick={() => setVista("excluidos")}
           >
             No los cumplen ({formatoEntero(validos.length - coinciden.length)})

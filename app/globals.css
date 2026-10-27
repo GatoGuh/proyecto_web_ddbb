@@ -90,14 +90,11 @@
   --sidebar-border: #24242d;
   --sidebar-ring: #8b5cf6;
 
-  /* Resaltados: un único degradado índigo → violeta. */
-  --morado: linear-gradient(118deg, #4f46e5 0%, #7c3aed 55%, #a855f7 100%);
-  --morado-hover: linear-gradient(
-    118deg,
-    #4338ca 0%,
-    #6d28d9 55%,
-    #9333ea 100%
-  );
+  /* Resaltados: una paleta índigo → violeta → púrpura, mostrada con una
+     forma distinta según el tipo de botón (ver utilidades morado-*). */
+  --indigo: #4f46e5;
+  --violeta: #7c3aed;
+  --purpura: #a855f7;
   --resplandor:
     radial-gradient(
       900px 340px at 8% -10%,
@@ -141,8 +138,57 @@
 
 /* Sólidos con degradado (sustituyen a los fondos semitransparentes).
    Se declaran con @utility para admitir variantes como hover: o data-active:. */
+/* Acción principal: diagonal; al pasar el ratón el degradado se desliza. */
 @utility fondo-morado {
-  background-image: var(--morado);
+  background-image: linear-gradient(
+    118deg,
+    var(--indigo) 0%,
+    var(--violeta) 30%,
+    var(--purpura) 50%,
+    var(--violeta) 70%,
+    var(--indigo) 100%
+  );
+  background-size: 220% 100%;
+  background-position: 0% 50%;
+  transition: background-position 600ms ease;
+}
+/* Pestaña activa y barras: horizontal. */
+@utility morado-horizontal {
+  background-image: linear-gradient(
+    90deg,
+    var(--indigo),
+    var(--violeta) 55%,
+    var(--purpura)
+  );
+}
+/* Opción elegida en un selector segmentado: vertical. */
+@utility morado-vertical {
+  background-image: linear-gradient(
+    180deg,
+    var(--purpura),
+    var(--violeta) 55%,
+    var(--indigo)
+  );
+}
+/* Chips de ciudad: radial, con el foco en --foco (distinto por ciudad). */
+@utility morado-radial {
+  background-image: radial-gradient(
+    circle at var(--foco, 0% 0%),
+    var(--purpura) 0%,
+    var(--violeta) 45%,
+    var(--indigo) 100%
+  );
+}
+/* Números de paso: cónico. */
+@utility morado-conico {
+  background-image: conic-gradient(
+    from 210deg at 30% 30%,
+    var(--indigo),
+    var(--violeta),
+    var(--purpura),
+    var(--violeta),
+    var(--indigo)
+  );
 }
 @utility solido {
   background-image: linear-gradient(180deg, #23232c 0%, #18181f 100%);
@@ -181,9 +227,13 @@
 }
 
 /* Estados hover de los botones con degradado. */
-button.fondo-morado:not(:disabled):hover,
-button[data-active].fondo-morado:hover {
-  background-image: var(--morado-hover);
+button.fondo-morado:not(:disabled):hover {
+  background-position: 100% 50%;
+}
+button.morado-radial:not(:disabled):hover,
+button.morado-vertical:not(:disabled):hover,
+[data-active].morado-horizontal:hover {
+  filter: brightness(1.12);
 }
 button.solido:not(:disabled):hover {
   background-image: linear-gradient(180deg, #2c2c37 0%, #1f1f27 100%);
