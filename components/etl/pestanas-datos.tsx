@@ -113,7 +113,7 @@ export function PestanaJson({ extraccion }: { extraccion: Extraccion | null }) {
       <div className="flex flex-wrap items-center gap-2 text-sm">
         <EstadoEtiqueta estado={actual.estado} />
         {actual.url && (
-          <code className="min-w-0 text-xs break-all text-muted-foreground">
+          <code className="min-w-0 text-sm break-all text-muted-foreground">
             GET {actual.url}
           </code>
         )}
@@ -125,7 +125,7 @@ export function PestanaJson({ extraccion }: { extraccion: Extraccion | null }) {
         </Alert>
       )}
       {actual.json !== undefined && (
-        <pre className="max-h-[28rem] overflow-auto rounded-lg border bg-muted/40 p-3 font-mono text-xs leading-relaxed break-all whitespace-pre-wrap">
+        <pre className="max-h-[28rem] overflow-auto rounded-lg border bg-muted p-3 font-mono text-sm leading-relaxed break-all whitespace-pre-wrap">
           {formatearJson(actual.json)}
         </pre>
       )}
@@ -256,7 +256,7 @@ export function PestanaRechazados({
         excluidos por tus filtros no aparecen aquí: no son errores de calidad.
       </Explicacion>
       {resumen.size > 0 && (
-        <ul className="flex flex-wrap gap-2 text-xs">
+        <ul className="flex flex-wrap gap-2 text-sm">
           {[...resumen].map(([tipo, n]) => (
             <li key={tipo} className="rounded-full border px-2 py-0.5">
               {tipo}: <span className="font-semibold tabular-nums">{n}</span>

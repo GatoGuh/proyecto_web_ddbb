@@ -21,34 +21,27 @@ const ESTADOS: Record<
     texto: string
     Icono: typeof CheckCircle2Icon
     clase: string
-    /** Color del icono cuando la etiqueta va sobre un fondo de color. */
-    icono: string
   }
 > = {
   pendiente: {
     texto: "Pendiente",
     Icono: CircleDashedIcon,
-    clase: "border-border text-muted-foreground",
-    icono: "text-zinc-400",
+    clase: "solido text-muted-foreground",
   },
   en_curso: {
     texto: "En curso",
     Icono: Loader2Icon,
-    clase: "border-sky-600/40 bg-sky-500/10 text-sky-700 dark:text-sky-300",
-    icono: "text-sky-400",
+    clase: "solido-azul",
   },
   completada: {
     texto: "Completada",
     Icono: CheckCircle2Icon,
-    clase:
-      "border-emerald-600/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300",
-    icono: "text-emerald-400",
+    clase: "solido-verde",
   },
   error: {
     texto: "Con errores",
     Icono: TriangleAlertIcon,
-    clase: "border-destructive/50 bg-destructive/10 text-destructive",
-    icono: "text-red-400",
+    clase: "solido-rojo",
   },
 }
 
@@ -56,31 +49,24 @@ const ESTADOS: Record<
 export function EstadoEtiqueta({
   estado,
   texto,
-  sobreColor = false,
   className,
 }: {
   estado: EstadoFase
   texto?: string
-  /** Para fondos de color (degradados): etiqueta blanca con icono de color. */
-  sobreColor?: boolean
   className?: string
 }) {
-  const { texto: base, Icono, clase, icono } = ESTADOS[estado]
+  const { texto: base, Icono, clase } = ESTADOS[estado]
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-xs font-medium whitespace-nowrap",
-        sobreColor ? "border-white/10 bg-white/[0.06] text-zinc-100" : clase,
+        "inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-sm font-medium whitespace-nowrap",
+        clase,
         className
       )}
     >
       <Icono
         aria-hidden
-        className={cn(
-          "size-3.5",
-          sobreColor && icono,
-          estado === "en_curso" && "animate-spin"
-        )}
+        className={cn("size-3.5", estado === "en_curso" && "animate-spin")}
       />
       {texto ?? base}
     </span>
@@ -214,7 +200,7 @@ export function SelectorNativo({
   return (
     <select
       className={cn(
-        "h-8 rounded-lg border border-input bg-background px-2 text-sm text-foreground outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50 dark:bg-input/30",
+        "h-8 rounded-lg border border-input bg-campo px-2 text-sm text-foreground outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50",
         className
       )}
       {...props}
@@ -273,8 +259,8 @@ export function ChipCiudad({
       className={cn(
         "inline-flex h-8 items-center gap-2 rounded-md border px-3 text-sm font-medium transition-colors focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none disabled:opacity-50",
         marcada
-          ? "border-primary/40 bg-accent text-accent-foreground"
-          : "bg-card text-muted-foreground hover:bg-muted"
+          ? "border-transparent fondo-morado text-white"
+          : "solido text-muted-foreground hover:text-foreground"
       )}
     >
       <span

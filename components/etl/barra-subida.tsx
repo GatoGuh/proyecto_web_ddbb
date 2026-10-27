@@ -31,7 +31,7 @@ export function BarraSubida({
     <div
       role="region"
       aria-label="Subida a Supabase"
-      className="fixed inset-x-0 bottom-0 z-[1100] border-t bg-card/95 shadow-[0_-8px_24px_-12px_rgb(15_27_45/0.25)] backdrop-blur supports-[backdrop-filter]:bg-card/85"
+      className="fixed inset-x-0 bottom-0 z-[1100] border-t fondo-barra shadow-[0_-8px_24px_-12px_#000]"
     >
       <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3 sm:px-6">
         <div className="min-w-0 flex-1" aria-live="polite">
@@ -43,9 +43,9 @@ export function BarraSubida({
           </p>
           <p
             className={cn(
-              "text-xs",
+              "text-sm",
               motivoBloqueo || aviso
-                ? "text-amber-700 dark:text-amber-400"
+                ? "text-amber-400"
                 : "text-muted-foreground"
             )}
           >
@@ -58,11 +58,11 @@ export function BarraSubida({
         </div>
         <Button variant="outline" onClick={onRevisar}>
           <EyeIcon data-icon="inline-start" />
-          Revisar antes de subir
+          Revisar lista
         </Button>
         <Button
           size="lg"
-          className="fondo-morado h-10 border-0 px-4 text-white shadow-sm disabled:opacity-50"
+          className="h-10 px-4"
           disabled={motivoBloqueo !== null || subiendo}
           onClick={onSubir}
         >

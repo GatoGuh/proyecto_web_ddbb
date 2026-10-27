@@ -175,10 +175,10 @@ export function PestanaValidos(props: Props) {
           "Marca las filas que quieres subir, una a una o todas las filtradas.",
           "Revisa la lista final en «Revisar y subir» y súbela.",
         ].map((t, i) => (
-          <li key={t} className="flex gap-2 rounded-md bg-muted/60 p-2.5">
+          <li key={t} className="flex gap-2 rounded-md border solido p-2.5">
             <span
               aria-hidden
-              className="grid size-5 shrink-0 place-items-center rounded-sm bg-primary text-[11px] font-bold text-primary-foreground"
+              className="grid size-6 shrink-0 place-items-center rounded-sm fondo-morado text-sm font-bold text-white"
             >
               {i + 1}
             </span>
@@ -313,7 +313,7 @@ export function PestanaValidos(props: Props) {
         )}
       </div>
 
-      <div className="flex flex-wrap items-center gap-2 rounded-lg border bg-accent/50 p-3">
+      <div className="flex flex-wrap items-center gap-2 rounded-lg border solido-acento p-3">
         <p className="text-sm" aria-live="polite">
           <strong className="text-base tabular-nums">
             {formatoEntero(props.aCargar)}
@@ -375,7 +375,7 @@ export function PestanaValidos(props: Props) {
             size="sm"
             role="radio"
             aria-checked={vista === "coinciden"}
-            variant={vista === "coinciden" ? "secondary" : "ghost"}
+            variant={vista === "coinciden" ? "default" : "ghost"}
             onClick={() => setVista("coinciden")}
           >
             Cumplen los filtros ({formatoEntero(coinciden.length)})
@@ -384,13 +384,13 @@ export function PestanaValidos(props: Props) {
             size="sm"
             role="radio"
             aria-checked={vista === "excluidos"}
-            variant={vista === "excluidos" ? "secondary" : "ghost"}
+            variant={vista === "excluidos" ? "default" : "ghost"}
             onClick={() => setVista("excluidos")}
           >
             No los cumplen ({formatoEntero(validos.length - coinciden.length)})
           </Button>
         </div>
-        <p className="text-xs text-muted-foreground">
+        <p className="text-sm text-muted-foreground">
           Ordenado por «{columnaOrden}»,{" "}
           {orden.direccion === "asc" ? "de menor a mayor" : "de mayor a menor"}.
           Pulsa el título de una columna para cambiarlo.
@@ -470,7 +470,7 @@ export function PestanaValidos(props: Props) {
                         />
                       </TableCell>
                       <CeldasRegistro r={r} />
-                      <TableCell className="text-xs text-muted-foreground">
+                      <TableCell className="text-sm text-muted-foreground">
                         {clavesConfirmadas.has(clave)
                           ? "Verificado"
                           : "Solo local"}

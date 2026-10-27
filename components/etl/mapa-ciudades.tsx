@@ -47,6 +47,7 @@ export function MapaCiudades({
 }: PropsMapa) {
   const [enfocada, setEnfocada] = React.useState<string | null>(null)
   const idDegradado = React.useId()
+  const { ref: refMapa, valor: escala } = useEscalaEtiquetas()
 
   const pulsar = (ciudad: string) => {
     if (!bloqueado) onAlternar(ciudad)
@@ -55,6 +56,7 @@ export function MapaCiudades({
   return (
     <div className="grid grid-cols-1 gap-3">
       <svg
+        ref={refMapa}
         viewBox={`0 0 ${MAPA_ANCHO} ${MAPA_ALTO}`}
         className="h-auto w-full"
         role="group"
@@ -136,6 +138,7 @@ export function MapaCiudades({
                 color={colorCiudad(c.nombre)}
                 marcada={marcada}
                 desplazamiento={c.nombre === "Bilbao" ? 30 : 0}
+                escala={escala}
               />
             </g>
           )
@@ -152,6 +155,35 @@ export function MapaCiudades({
   )
 }
 
+// Tamaño mínimo del texto de las etiquetas en píxeles de pantalla.
+const FUENTE_MINIMA_PX = 14
+const FUENTE_BASE = 13
+
+/**
+ * El SVG se escala con su contenedor, así que su texto también. Devuelve el
+ * factor que hay que aplicar a las etiquetas para que nunca bajen de 14 px.
+ */
+function useEscalaEtiquetas() {
+  const ref = React.useRef<SVGSVGElement>(null)
+  const [valor, setValor] = React.useState(1)
+  React.useEffect(() => {
+    const svg = ref.current
+    if (!svg) return
+    const medir = () => {
+      const ancho = svg.getBoundingClientRect().width
+      if (ancho > 0) {
+        const pxPorUnidad = ancho / MAPA_ANCHO
+        setValor(Math.max(1, FUENTE_MINIMA_PX / (FUENTE_BASE * pxPorUnidad)))
+      }
+    }
+    medir()
+    const observador = new ResizeObserver(medir)
+    observador.observe(svg)
+    return () => observador.disconnect()
+  }, [])
+  return { ref, valor }
+}
+
 /** Nombre de la ciudad sobre el mapa, con un punto de su color de gráficos. */
 function Etiqueta({
   x,
@@ -160,6 +192,7 @@ function Etiqueta({
   color,
   marcada,
   desplazamiento,
+  escala,
 }: {
   x: number
   y: number
@@ -167,6 +200,8 @@ function Etiqueta({
   color: string
   marcada: boolean
   desplazamiento?: number
+  /** Factor para que el texto mida al menos 14 px en pantalla. */
+  escala: number
 }) {
   // Barcelona queda pegada al borde derecho: su etiqueta va a la izquierda.
   // Bizkaia es pequeña: la etiqueta de Bilbao se aparta para no taparla.
@@ -174,7 +209,12 @@ function Etiqueta({
   const ancho = texto.length * 7.4 + 22
   const bx = izquierda ? x - ancho + 8 : x - 8 + (desplazamiento ?? 0)
   return (
-    <g pointerEvents="none">
+    // Se escala alrededor del punto de anclaje, así la etiqueta no se aleja
+    // de su provincia al crecer.
+    <g
+      pointerEvents="none"
+      transform={`translate(${x} ${y}) scale(${escala}) translate(${-x} ${-y})`}
+    >
       <rect
         x={bx}
         y={y - 11}
@@ -188,7 +228,7 @@ function Etiqueta({
       <text
         x={bx + 19}
         y={y + 4.5}
-        fontSize={13}
+        fontSize={FUENTE_BASE}
         fontWeight={600}
         fill={marcada ? "#ffffff" : "#a1a1b0"}
       >
@@ -211,7 +251,7 @@ function ResumenEnfocado({
 }) {
   return (
     <div
-      className="min-h-[3.25rem] rounded-md border bg-muted/50 px-3 py-2 text-sm"
+      className="min-h-[3.25rem] rounded-md border solido px-3 py-2 text-sm"
       aria-live="polite"
     >
       {!ciudad ? (

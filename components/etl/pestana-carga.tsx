@@ -1,7 +1,6 @@
 "use client"
 
-import * as React from "react"
-import { RotateCcwIcon, UploadCloudIcon } from "lucide-react"
+import { RotateCcwIcon } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -49,30 +48,29 @@ export function PestanaCarga({
   bloqueoFiltros,
   carga,
   estadoSupabase,
-  onSubir,
+  simularFallo,
+  setSimularFallo,
   onReintentar,
 }: {
   aCargar: RegistroValido[]
   bloqueoFiltros: boolean
   carga: Carga | null
   estadoSupabase: EstadoSupabase
-  onSubir: (simularFallo: boolean) => void
+  simularFallo: boolean
+  setSimularFallo: (v: boolean) => void
   onReintentar: () => void
 }) {
-  const [simularFallo, setSimularFallo] = React.useState(false)
   const enCurso = carga?.enCurso ?? false
   const sinCredenciales = estadoSupabase !== null && !estadoSupabase.configurado
-  const desactivado =
-    aCargar.length === 0 || bloqueoFiltros || enCurso || sinCredenciales
 
   return (
     <div className="grid grid-cols-1 gap-5">
       <section className="grid grid-cols-1 gap-3">
         <Explicacion>
           Esta es la lista <strong>exacta</strong> que se enviará, en el orden
-          elegido, dividida en lotes de {TAMANO_LOTE}. Al pulsar el botón se
-          congela una copia: cambiar después los filtros no altera una carga en
-          curso. Ojo: una base de datos{" "}
+          elegido, dividida en lotes de {TAMANO_LOTE}. Al pulsar «Subir» en la
+          barra inferior se congela una copia: cambiar después los filtros no
+          altera una carga en curso. Ojo: una base de datos{" "}
           <strong>no conserva el orden de inserción</strong>; para leer los
           datos en un orden concreto, la consulta necesita <code>ORDER BY</code>
           .
@@ -98,30 +96,17 @@ export function PestanaCarga({
             Hay filtros no válidos: corrígelos antes de subir.
           </p>
         )}
-        <div className="flex flex-wrap items-center gap-3">
-          <Button
-            size="lg"
-            className="fondo-morado h-10 border-0 px-4 text-white shadow-sm disabled:opacity-50"
-            onClick={() => onSubir(simularFallo)}
-            disabled={desactivado}
-          >
-            <UploadCloudIcon data-icon="inline-start" />
-            {enCurso
-              ? "Subiendo…"
-              : `Subir ${formatoEntero(aCargar.length)} registros a Supabase`}
-          </Button>
-          {process.env.NODE_ENV === "development" && (
-            <Label className="font-normal text-muted-foreground">
-              <Checkbox
-                checked={simularFallo}
-                onCheckedChange={setSimularFallo}
-                disabled={enCurso}
-              />
-              Práctica: simular un fallo del servidor en el lote 2 (o el 1 si
-              solo hay uno). Solo en desarrollo.
-            </Label>
-          )}
-        </div>
+        {process.env.NODE_ENV === "development" && (
+          <Label className="font-normal text-muted-foreground">
+            <Checkbox
+              checked={simularFallo}
+              onCheckedChange={setSimularFallo}
+              disabled={enCurso}
+            />
+            Práctica: en la próxima subida, simular un fallo del servidor en el
+            lote 2 (o el 1 si solo hay uno). Solo en desarrollo.
+          </Label>
+        )}
       </section>
 
       {carga && (
@@ -178,7 +163,7 @@ function InformeCarga({
 
   return (
     <section
-      className="grid grid-cols-1 gap-3 rounded-xl border p-3"
+      className="grid grid-cols-1 gap-3 rounded-xl border bg-card p-3"
       aria-live="polite"
     >
       <div className="flex flex-wrap items-center gap-2">
@@ -312,8 +297,8 @@ function InformeCarga({
 
 function Dato({ titulo, valor }: { titulo: string; valor: number }) {
   return (
-    <div className="rounded-lg bg-muted/50 p-2">
-      <dt className="text-xs text-muted-foreground">{titulo}</dt>
+    <div className="rounded-lg border solido p-2">
+      <dt className="text-sm text-muted-foreground">{titulo}</dt>
       <dd className="text-lg font-semibold tabular-nums">
         {formatoEntero(valor)}
       </dd>
