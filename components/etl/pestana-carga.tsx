@@ -32,6 +32,8 @@ import { SinDatos } from "./pestanas-datos"
 export type EstadoSupabase = {
   configurado: boolean
   tablaDisponible: boolean
+  /** El servidor rechaza el acceso (403), p. ej., en producción sin permiso. */
+  bloqueado?: boolean
   mensaje: string
 } | null
 
@@ -77,7 +79,11 @@ export function PestanaCarga({
         </Explicacion>
         {sinCredenciales && (
           <Alert variant="destructive">
-            <AlertTitle>Supabase no está configurado</AlertTitle>
+            <AlertTitle>
+              {estadoSupabase?.bloqueado
+                ? "La carga está bloqueada en este entorno"
+                : "Supabase no está configurado"}
+            </AlertTitle>
             <AlertDescription>{estadoSupabase?.mensaje}</AlertDescription>
           </Alert>
         )}
