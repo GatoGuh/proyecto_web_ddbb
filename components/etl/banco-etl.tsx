@@ -20,12 +20,12 @@ import {
 } from "@/lib/etl/resumen"
 import { claveRegistro, type RespuestaCiudad } from "@/lib/etl/tipos"
 import { transformarRespuestas } from "@/lib/etl/transformar"
-import { cn } from "@/lib/utils"
+import { ChevronDownIcon, SlidersHorizontalIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { BarraSubida } from "./barra-subida"
 import { formatoEntero, type EstadoFase } from "./comun"
 import { Configuracion } from "./configuracion"
 import { GraficoHumedad, GraficoLluvia, GraficoTemperatura } from "./graficos"
+import { PanelSubida } from "./panel-subida"
 import { PestanaCarga, type EstadoSupabase } from "./pestana-carga"
 import { PestanaSupabase } from "./pestana-supabase"
 import { PestanaValidos } from "./pestana-validos"
@@ -60,6 +60,8 @@ export function BancoEtl() {
   const [pestana, setPestana] = React.useState("validos")
   const [detalle, setDetalle] = React.useState<Detalle>("rechazados")
   const [simularFallo, setSimularFallo] = React.useState(false)
+  // Filtros, tablas, informe y datos técnicos: ocultos hasta que se piden.
+  const [avanzada, setAvanzada] = React.useState(false)
   const [filtros, setFiltros] = React.useState<Filtros>(FILTROS_INICIALES)
   const [orden, setOrden] = React.useState<Orden>(ORDEN_INICIAL)
   const [seleccionBruta, setSeleccion] = React.useState<Set<string>>(
@@ -159,6 +161,7 @@ export function BancoEtl() {
     const tecnica = DETALLES.find((d) => d.id === p)
     if (tecnica) setDetalle(tecnica.id)
     setPestana(tecnica ? "tecnicos" : p)
+    setAvanzada(true)
     document
       .getElementById("paso-eleccion")
       ?.scrollIntoView({ behavior: "smooth", block: "start" })
@@ -332,12 +335,18 @@ export function BancoEtl() {
       : erroresFiltro.length > 0
         ? "Hay filtros no válidos: corrígelos antes de subir."
         : aCargar.length === 0
-          ? "Marca filas en «Elegir registros» para poder subirlas."
+          ? "Pulsa «Marcar todos» para elegir los registros que se subirán."
           : null
   const avisoSubida =
     estadoSupabase?.configurado && !estadoSupabase.tablaDisponible
       ? "La tabla de destino no existe todavía: aplica la migración o la subida fallará."
       : null
+
+  const hayFiltros =
+    JSON.stringify(filtros) !== JSON.stringify(FILTROS_INICIALES)
+  const todosMarcados =
+    coinciden.length > 0 &&
+    coinciden.every((r) => seleccion.has(claveRegistro(r)))
 
   const pendientesLocales = aCargar.filter(
     (r) => !clavesConfirmadas.has(claveRegistro(r))
@@ -347,12 +356,7 @@ export function BancoEtl() {
     <>
       <Cabecera fases={fases} destino={destino} onInspeccionar={irA} />
 
-      <div
-        className={cn(
-          "mx-auto flex max-w-7xl flex-col gap-6 px-4 py-6 sm:px-6",
-          validos.length > 0 && "pb-40 sm:pb-28"
-        )}
-      >
+      <div className="mx-auto flex max-w-7xl flex-col gap-6 px-4 py-6 sm:px-6">
         <Configuracion
           ciudades={ciudades}
           setCiudades={setCiudades}
@@ -393,93 +397,144 @@ export function BancoEtl() {
         <Seccion
           id="paso-eleccion"
           numero={hayDatos ? 3 : 2}
-          titulo="Elige qué subir y revisa el resultado"
-          descripcion="Filtra y marca las filas que quieres guardar, revisa la lista exacta que se enviará y consulta lo que ya está en Supabase."
+          titulo="Sube los datos a Supabase"
+          descripcion="Marca los registros y súbelos. En la vista avanzada puedes filtrarlos, revisarlos uno a uno y ver el informe."
         >
-          <Tabs value={pestana} onValueChange={(v) => setPestana(String(v))}>
-            <div className="-mx-1 overflow-x-auto px-1 pb-1">
-              <TabsList className="h-auto flex-wrap justify-start gap-y-1">
-                <TabsTrigger value="validos">
-                  Elegir registros ({formatoEntero(validos.length)})
-                </TabsTrigger>
-                <TabsTrigger value="carga">
-                  Revisar y subir ({formatoEntero(aCargar.length)})
-                </TabsTrigger>
-                <TabsTrigger value="supabase">Guardado en Supabase</TabsTrigger>
-                <TabsTrigger value="tecnicos">Detalles técnicos</TabsTrigger>
-              </TabsList>
-            </div>
-            <div className="pt-4">
-              <TabsContent value="validos">
-                <PestanaValidos
-                  validos={validos}
-                  coinciden={coinciden}
-                  erroresFiltro={erroresFiltro}
-                  filtros={filtros}
-                  setFiltros={setFiltros}
-                  orden={orden}
-                  setOrden={setOrden}
-                  seleccion={seleccion}
-                  setSeleccion={setSeleccion}
-                  seleccionFueraDeFiltros={seleccionFueraDeFiltros}
-                  aCargar={aCargar.length}
-                  ciudadesDisponibles={ciudadesDisponibles}
-                  clavesConfirmadas={clavesConfirmadas}
-                />
-              </TabsContent>
-              <TabsContent value="carga">
-                <PestanaCarga
-                  aCargar={aCargar}
-                  bloqueoFiltros={erroresFiltro.length > 0}
-                  carga={carga}
-                  estadoSupabase={estadoSupabase}
-                  simularFallo={simularFallo}
-                  setSimularFallo={setSimularFallo}
-                  onReintentar={() => void reintentarFallidos()}
-                />
-              </TabsContent>
-              <TabsContent value="supabase">
-                <PestanaSupabase
-                  pendientesLocales={pendientesLocales}
-                  confirmadosSesion={clavesConfirmadas.size}
-                />
-              </TabsContent>
-              <TabsContent value="tecnicos">
-                <div
-                  role="radiogroup"
-                  aria-label="Vista técnica"
-                  className="mb-4 inline-flex flex-wrap gap-0.5 rounded-md bg-muted p-0.5"
-                >
-                  {DETALLES.map((d) => (
-                    <Button
-                      key={d.id}
-                      size="sm"
-                      role="radio"
-                      aria-checked={detalle === d.id}
-                      variant={detalle === d.id ? "seleccion" : "ghost"}
-                      onClick={() => setDetalle(d.id)}
-                    >
-                      {d.titulo}
-                      {d.id === "rechazados" &&
-                        ` (${formatoEntero(limpieza.valor.rechazados.length)})`}
-                      {d.id === "transformados" &&
-                        ` (${formatoEntero(totalExtraido)})`}
-                    </Button>
-                  ))}
+          {validos.length > 0 ? (
+            <PanelSubida
+              marcados={aCargar.length}
+              total={coinciden.length}
+              hayFiltros={hayFiltros}
+              todosMarcados={todosMarcados}
+              fueraDeFiltros={seleccionFueraDeFiltros}
+              motivoBloqueo={motivoBloqueo}
+              aviso={avisoSubida}
+              carga={carga}
+              onMarcarTodos={() =>
+                setSeleccion(
+                  new Set([...seleccion, ...coinciden.map(claveRegistro)])
+                )
+              }
+              onDesmarcarTodo={() => setSeleccion(new Set())}
+              onSubir={() => void iniciar(aCargar, simularFallo)}
+              onReintentar={() => void reintentarFallidos()}
+            />
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              Descarga los datos en el paso 1 para poder subirlos.
+            </p>
+          )}
+
+          <Button
+            variant="ghost"
+            className="mt-4 justify-self-start"
+            aria-expanded={avanzada}
+            aria-controls="vista-avanzada"
+            onClick={() => setAvanzada(!avanzada)}
+          >
+            <SlidersHorizontalIcon data-icon="inline-start" />
+            {avanzada ? "Ocultar vista avanzada" : "Vista avanzada"}
+            <ChevronDownIcon
+              data-icon="inline-end"
+              className={avanzada ? "rotate-180" : undefined}
+            />
+          </Button>
+
+          {avanzada && (
+            <div id="vista-avanzada" className="mt-4 border-t pt-4">
+              <Tabs
+                value={pestana}
+                onValueChange={(v) => setPestana(String(v))}
+              >
+                <div className="-mx-1 overflow-x-auto px-1 pb-1">
+                  <TabsList className="h-auto flex-wrap justify-start gap-y-1">
+                    <TabsTrigger value="validos">
+                      Elegir registros ({formatoEntero(validos.length)})
+                    </TabsTrigger>
+                    <TabsTrigger value="carga">
+                      Revisar y subir ({formatoEntero(aCargar.length)})
+                    </TabsTrigger>
+                    <TabsTrigger value="supabase">
+                      Guardado en Supabase
+                    </TabsTrigger>
+                    <TabsTrigger value="tecnicos">
+                      Detalles técnicos
+                    </TabsTrigger>
+                  </TabsList>
                 </div>
-                {detalle === "rechazados" && (
-                  <PestanaRechazados
-                    rechazados={limpieza.valor.rechazados}
-                    excluidosPorFiltros={validos.length - coinciden.length}
-                  />
-                )}
-                {detalle === "transformados" && (
-                  <PestanaTransformados resultado={transformacion.valor} />
-                )}
-                {detalle === "json" && <PestanaJson extraccion={extraccion} />}
-              </TabsContent>
+                <div className="pt-4">
+                  <TabsContent value="validos">
+                    <PestanaValidos
+                      validos={validos}
+                      coinciden={coinciden}
+                      erroresFiltro={erroresFiltro}
+                      filtros={filtros}
+                      setFiltros={setFiltros}
+                      orden={orden}
+                      setOrden={setOrden}
+                      seleccion={seleccion}
+                      setSeleccion={setSeleccion}
+                      ciudadesDisponibles={ciudadesDisponibles}
+                      clavesConfirmadas={clavesConfirmadas}
+                    />
+                  </TabsContent>
+                  <TabsContent value="carga">
+                    <PestanaCarga
+                      aCargar={aCargar}
+                      bloqueoFiltros={erroresFiltro.length > 0}
+                      carga={carga}
+                      estadoSupabase={estadoSupabase}
+                      simularFallo={simularFallo}
+                      setSimularFallo={setSimularFallo}
+                      onReintentar={() => void reintentarFallidos()}
+                    />
+                  </TabsContent>
+                  <TabsContent value="supabase">
+                    <PestanaSupabase
+                      pendientesLocales={pendientesLocales}
+                      confirmadosSesion={clavesConfirmadas.size}
+                    />
+                  </TabsContent>
+                  <TabsContent value="tecnicos">
+                    <div
+                      role="radiogroup"
+                      aria-label="Vista técnica"
+                      className="mb-4 inline-flex flex-wrap gap-0.5 rounded-md bg-muted p-0.5"
+                    >
+                      {DETALLES.map((d) => (
+                        <Button
+                          key={d.id}
+                          size="sm"
+                          role="radio"
+                          aria-checked={detalle === d.id}
+                          variant={detalle === d.id ? "seleccion" : "ghost"}
+                          onClick={() => setDetalle(d.id)}
+                        >
+                          {d.titulo}
+                          {d.id === "rechazados" &&
+                            ` (${formatoEntero(limpieza.valor.rechazados.length)})`}
+                          {d.id === "transformados" &&
+                            ` (${formatoEntero(totalExtraido)})`}
+                        </Button>
+                      ))}
+                    </div>
+                    {detalle === "rechazados" && (
+                      <PestanaRechazados
+                        rechazados={limpieza.valor.rechazados}
+                        excluidosPorFiltros={validos.length - coinciden.length}
+                      />
+                    )}
+                    {detalle === "transformados" && (
+                      <PestanaTransformados resultado={transformacion.valor} />
+                    )}
+                    {detalle === "json" && (
+                      <PestanaJson extraccion={extraccion} />
+                    )}
+                  </TabsContent>
+                </div>
+              </Tabs>
             </div>
-          </Tabs>
+          )}
         </Seccion>
 
         <footer className="text-sm text-muted-foreground">
@@ -496,22 +551,6 @@ export function BancoEtl() {
           didáctica sin autenticación.
         </footer>
       </div>
-
-      {validos.length > 0 && (
-        <BarraSubida
-          aCargar={aCargar.length}
-          fueraDeFiltros={seleccionFueraDeFiltros}
-          subiendo={carga?.enCurso ?? false}
-          motivoBloqueo={motivoBloqueo}
-          aviso={avisoSubida}
-          onRevisar={() => irA("carga")}
-          onSubir={() => {
-            // Se muestra el informe por lotes mientras se sube.
-            irA("carga")
-            void iniciar(aCargar, simularFallo)
-          }}
-        />
-      )}
     </>
   )
 }
