@@ -9,11 +9,13 @@ import {
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import type { Carga } from "@/hooks/use-carga"
+import { cn } from "@/lib/utils"
 import { formatoEntero } from "./comun"
 
 /**
- * Lo único que se ve de la sección 3 a simple vista: cuántos registros están
- * marcados, un botón para marcarlos o desmarcarlos todos y el de subir.
+ * Cuántos registros están marcados, un botón para marcarlos o desmarcarlos
+ * todos y el de subir. Aparece en la sección 3 y, en versión compacta, junto
+ * al mapa del paso 1; ambas comparten el mismo estado.
  */
 export function PanelSubida({
   marcados,
@@ -28,6 +30,7 @@ export function PanelSubida({
   onDesmarcarTodo,
   onSubir,
   onReintentar,
+  compacto = false,
 }: {
   /** Seleccionados que cumplen los filtros: lo que se subiría. */
   marcados: number
@@ -44,12 +47,23 @@ export function PanelSubida({
   onDesmarcarTodo: () => void
   onSubir: () => void
   onReintentar: () => void
+  /** Para columnas estrechas: botones apilados a todo el ancho. */
+  compacto?: boolean
 }) {
   const subiendo = carga?.enCurso ?? false
   return (
     <div className="grid grid-cols-1 gap-3">
-      <div className="flex flex-col gap-3 rounded-lg bg-background p-4 sm:flex-row sm:items-center">
-        <p className="flex-1 text-base" aria-live="polite">
+      <div
+        className={cn(
+          "flex flex-col gap-3 rounded-lg bg-background p-4",
+          !compacto && "sm:flex-row sm:items-center"
+        )}
+      >
+        {/* Solo una de las dos copias anuncia los cambios al lector de pantalla. */}
+        <p
+          className="flex-1 text-base"
+          aria-live={compacto ? undefined : "polite"}
+        >
           <strong className="text-2xl font-semibold tabular-nums">
             {formatoEntero(marcados)}
           </strong>{" "}
@@ -58,7 +72,7 @@ export function PanelSubida({
             {hayFiltros && " (con filtros)"}
           </span>
         </p>
-        <div className="grid grid-cols-1 gap-2 sm:flex">
+        <div className={cn("grid grid-cols-1 gap-2", !compacto && "sm:flex")}>
           {/* Un único botón: marca todos o, si ya lo están, lo desmarca todo. */}
           <Button
             variant="outline"
@@ -93,6 +107,7 @@ export function PanelSubida({
         aviso={aviso}
         fueraDeFiltros={fueraDeFiltros}
         onReintentar={onReintentar}
+        anunciar={!compacto}
       />
     </div>
   )
@@ -105,12 +120,14 @@ function Estado({
   aviso,
   fueraDeFiltros,
   onReintentar,
+  anunciar,
 }: {
   carga: Carga | null
   motivoBloqueo: string | null
   aviso: string | null
   fueraDeFiltros: number
   onReintentar: () => void
+  anunciar: boolean
 }) {
   const lotesFallidos = carga?.lotes.filter((l) => l.estado === "error") ?? []
   const v = carga?.verificacion
@@ -156,7 +173,7 @@ function Estado({
   return (
     <div
       className={`flex flex-wrap items-center gap-2 text-sm ${tono}`}
-      aria-live="polite"
+      aria-live={anunciar ? "polite" : undefined}
     >
       {icono}
       <span>{texto}</span>

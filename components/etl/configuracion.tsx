@@ -1,5 +1,6 @@
 "use client"
 
+import type * as React from "react"
 import { DownloadCloudIcon, RotateCcwIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -33,6 +34,7 @@ export function Configuracion({
   resumen,
   onExtraer,
   onReintentar,
+  panelSubida,
 }: {
   ciudades: string[]
   setCiudades: (c: string[]) => void
@@ -45,6 +47,8 @@ export function Configuracion({
   resumen: Map<string, ResumenCiudad>
   onExtraer: () => void
   onReintentar: (ciudad: string) => void
+  /** Botones de marcar y subir, cuando ya hay datos descargados. */
+  panelSubida?: React.ReactNode
 }) {
   const errores = validarConfiguracion(ciudades, inicio, fin)
   const dias = diasInclusivos(inicio, fin)
@@ -164,6 +168,8 @@ export function Configuracion({
             {ciudades.length === 1 ? "ciudad" : "ciudades"} ×{" "}
             {dias && dias > 0 ? dias : 0} días × 24 h)
           </p>
+
+          {panelSubida}
 
           {extraccion && (
             <div className="grid gap-2" aria-live="polite">

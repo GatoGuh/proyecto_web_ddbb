@@ -348,6 +348,23 @@ export function BancoEtl() {
     coinciden.length > 0 &&
     coinciden.every((r) => seleccion.has(claveRegistro(r)))
 
+  // El mismo panel aparece junto al mapa (compacto) y en la sección 3.
+  const propsPanel: React.ComponentProps<typeof PanelSubida> = {
+    marcados: aCargar.length,
+    total: coinciden.length,
+    hayFiltros,
+    todosMarcados,
+    fueraDeFiltros: seleccionFueraDeFiltros,
+    motivoBloqueo,
+    aviso: avisoSubida,
+    carga,
+    onMarcarTodos: () =>
+      setSeleccion(new Set([...seleccion, ...coinciden.map(claveRegistro)])),
+    onDesmarcarTodo: () => setSeleccion(new Set()),
+    onSubir: () => void iniciar(aCargar, simularFallo),
+    onReintentar: () => void reintentarFallidos(),
+  }
+
   const pendientesLocales = aCargar.filter(
     (r) => !clavesConfirmadas.has(claveRegistro(r))
   ).length
@@ -369,6 +386,11 @@ export function BancoEtl() {
           resumen={resumen}
           onExtraer={nuevaExtraccion}
           onReintentar={(c) => void reintentar(c)}
+          panelSubida={
+            validos.length > 0 && !extrayendo ? (
+              <PanelSubida {...propsPanel} compacto />
+            ) : undefined
+          }
         />
 
         {hayDatos && (
@@ -401,24 +423,7 @@ export function BancoEtl() {
           descripcion="Marca los registros y súbelos. En la vista avanzada puedes filtrarlos, revisarlos uno a uno y ver el informe."
         >
           {validos.length > 0 ? (
-            <PanelSubida
-              marcados={aCargar.length}
-              total={coinciden.length}
-              hayFiltros={hayFiltros}
-              todosMarcados={todosMarcados}
-              fueraDeFiltros={seleccionFueraDeFiltros}
-              motivoBloqueo={motivoBloqueo}
-              aviso={avisoSubida}
-              carga={carga}
-              onMarcarTodos={() =>
-                setSeleccion(
-                  new Set([...seleccion, ...coinciden.map(claveRegistro)])
-                )
-              }
-              onDesmarcarTodo={() => setSeleccion(new Set())}
-              onSubir={() => void iniciar(aCargar, simularFallo)}
-              onReintentar={() => void reintentarFallidos()}
-            />
+            <PanelSubida {...propsPanel} />
           ) : (
             <p className="text-sm text-muted-foreground">
               Descarga los datos en el paso 1 para poder subirlos.
