@@ -68,9 +68,9 @@ export function PestanaCarga({
       <section className="grid grid-cols-1 gap-3">
         <Explicacion>
           Esta es la lista <strong>exacta</strong> que se enviará, en el orden
-          elegido, dividida en lotes de {TAMANO_LOTE}. Al pulsar «Subir» en la
-          barra inferior se congela una copia: cambiar después los filtros no
-          altera una carga en curso. Ojo: una base de datos{" "}
+          elegido, dividida en lotes de {TAMANO_LOTE}. Al pulsar «Subir» se
+          congela una copia: cambiar después los filtros no altera una carga en
+          curso. Ojo: una base de datos{" "}
           <strong>no conserva el orden de inserción</strong>; para leer los
           datos en un orden concreto, la consulta necesita <code>ORDER BY</code>
           .
