@@ -99,6 +99,9 @@ async function reconstruir() {
     // Las lentes del mapa refractan líneas finas: sin aberración (deja bordes
     // irisados), menos refracción y sin ondulación.
     const enMapa = el.dataset.captura !== undefined
+    // Lentes grandes (la tarjeta del mapa): con el bisel normal su franja
+    // lateral es muy ancha y arrastra y duplica lo que hay debajo.
+    const plana = el.dataset.plana !== undefined
     const resultado = liquidGL({
       target: `[data-cristal="${id}"]`,
       snapshot: el.dataset.captura ?? `[data-fondo-cristal="${id}"]`,
@@ -107,9 +110,9 @@ async function reconstruir() {
       content: false,
       // Bisel contenido (más profundo partía en trozos lo que refracta) y un
       // poco de aberración cromática, con bordes irisados como un prisma.
-      refraction: enMapa ? 0.02 : 0.035,
-      bevelDepth: 0.28,
-      bevelWidth: 0.3,
+      refraction: plana ? 0.008 : enMapa ? 0.02 : 0.035,
+      bevelDepth: plana ? 0.12 : 0.28,
+      bevelWidth: plana ? 0.06 : 0.3,
       aberration: enMapa ? 0 : 0.06,
       frost: 0,
       // El brillo lo dan el relieve CSS y el reflejo del ratón; el

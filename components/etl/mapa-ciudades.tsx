@@ -368,12 +368,15 @@ const pctY = (y: number) => (y / MAPA_ALTO) * 100
 function LenteMapa({
   captura,
   redondeo,
+  plana = false,
   className,
   children,
   ...resto
 }: {
   captura: string
   redondeo: string
+  /** Bisel fino y apenas refracción (ver cristal.tsx). */
+  plana?: boolean
   className?: string
   children: React.ReactNode
 } & Omit<React.ComponentProps<"span">, "children">) {
@@ -384,6 +387,7 @@ function LenteMapa({
         data-cristal={id}
         data-captura={captura}
         data-tinte={TINTE_MAPA}
+        data-plana={plana || undefined}
         className={cn("absolute inset-0 bg-background", redondeo)}
         style={{ zIndex: Z_CRISTAL }}
       />
@@ -482,6 +486,9 @@ function TarjetaCiudad({
     <LenteMapa
       captura={captura}
       redondeo="rounded-lg"
+      // En el móvil la tarjeta es ancha y baja: con el bisel normal, su borde
+      // deformaba las provincias de debajo (Sevilla salía duplicada).
+      plana
       className={cn(
         "pointer-events-none w-64",
         // En pantallas estrechas no cabe junto a la provincia: va a lo ancho
