@@ -8,7 +8,9 @@ subida a la base de datos) y la cabecera muestra el estado de cada uno. El
 detalle técnico de cada fase está en la «Vista avanzada» del paso 3.
 
 Stack: Next.js 16 (App Router), TypeScript, Tailwind CSS 4, shadcn/ui (Base UI)
-y `@supabase/supabase-js`.
+y `@supabase/supabase-js`. El efecto de cristal líquido de los botones y del
+mapa usa [liquidGL](https://github.com/naughtyduk/liquidGL) (`liquid-gl`, MIT);
+si el navegador no tiene WebGL, se muestra un cristal hecho solo con CSS.
 
 ## Instalación
 

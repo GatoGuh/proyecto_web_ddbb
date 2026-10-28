@@ -19,6 +19,7 @@ import {
   formatoDuracion,
   formatoEntero,
 } from "./comun"
+import { Cristal } from "./cristal"
 import { MapaCiudades } from "./mapa-ciudades"
 import { Seccion } from "./seccion"
 
@@ -154,15 +155,18 @@ export function Configuracion({
             </ul>
           )}
 
-          <Button
-            size="lg"
-            className="h-11 border-0 fondo-morado text-base text-white"
-            onClick={onExtraer}
-            disabled={enCurso || errores.length > 0}
-          >
-            <DownloadCloudIcon data-icon="inline-start" />
-            {enCurso ? "Descargando…" : "Descargar datos"}
-          </Button>
+          <Cristal apagado={enCurso || errores.length > 0}>
+            <Button
+              variant="cristal"
+              size="lg"
+              className="h-10 text-base"
+              onClick={onExtraer}
+              disabled={enCurso || errores.length > 0}
+            >
+              <DownloadCloudIcon data-icon="inline-start" />
+              {enCurso ? "Descargando…" : "Descargar datos"}
+            </Button>
+          </Cristal>
           <p className="-mt-2 text-sm text-muted-foreground tabular-nums">
             {formatoEntero(previstos)} registros horarios ({ciudades.length}{" "}
             {ciudades.length === 1 ? "ciudad" : "ciudades"} ×{" "}

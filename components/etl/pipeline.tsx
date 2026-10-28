@@ -54,7 +54,7 @@ export function Cabecera({
       <div className="mx-auto grid max-w-7xl gap-5 px-4 pt-6 pb-5 sm:px-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">
-            Pipeline ETL de datos meteorológicos
+            Datos meteorológicos de España
           </h1>
           <span
             className="flex items-center gap-2 text-sm text-muted-foreground"

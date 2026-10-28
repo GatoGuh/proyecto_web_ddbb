@@ -12,13 +12,13 @@ const fontSans = IBM_Plex_Sans({
 })
 
 export const metadata: Metadata = {
-  title: "Pipeline ETL · Open-Meteo → Supabase",
+  title: "Datos meteorológicos de España",
   description:
     "Práctica de Big Data: extracción, transformación, limpieza, filtrado y carga de datos meteorológicos.",
 }
 
 // viewport-fit=cover permite respetar la zona segura del iPhone (barra de
-// inicio) en la barra fija inferior. No se limita el zoom del usuario.
+// inicio). No se limita el zoom del usuario.
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
