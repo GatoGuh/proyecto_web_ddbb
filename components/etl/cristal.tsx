@@ -216,6 +216,7 @@ export function Cristal({
       ref={refEnvoltura}
       onPointerEnter={(e) => reflejo.saltar(...posicion(e))}
       onPointerMove={(e) => reflejo.mover(...posicion(e))}
+      data-tono={tono}
       className={cn("group/cristal relative grid", className)}
     >
       <span
@@ -230,7 +231,10 @@ export function Cristal({
         ref={ref}
         aria-hidden
         data-cristal={id}
-        className="pointer-events-none absolute inset-0 rounded-lg fondo-morado"
+        className={cn(
+          "pointer-events-none absolute inset-0 rounded-lg",
+          tono === "claro" ? "fondo-lente-claro" : "fondo-morado"
+        )}
         style={{ zIndex: Z_CRISTAL }}
       />
       {/* data-liquid-ignore: el texto del botón no entra en la captura que
