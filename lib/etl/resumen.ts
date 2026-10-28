@@ -57,18 +57,19 @@ export function resumirPorCiudad(
 export type PuntoDiario = { fecha: string } & Record<string, number | string>
 
 /**
- * Temperatura media de cada día (UTC) por ciudad, ordenada por fecha.
- * Cada punto: { fecha: "2026-09-01", Barcelona: 24.1, Madrid: 22.7, … }.
+ * Media de cada día (UTC) por ciudad para un campo numérico, ordenada por
+ * fecha. Cada punto: { fecha: "2026-09-01", Barcelona: 24.1, Madrid: 22.7, … }.
  */
-export function mediaDiariaTemperatura(
-  registros: readonly RegistroValido[]
+export function mediaDiaria(
+  registros: readonly RegistroValido[],
+  campo: "temperatura_c" | "humedad_pct"
 ): PuntoDiario[] {
   const sumas = new Map<string, Map<string, { suma: number; n: number }>>()
   for (const r of registros) {
     const dia = r.fecha_hora.slice(0, 10)
     const porCiudad = sumas.get(dia) ?? new Map()
     const s = porCiudad.get(r.ciudad) ?? { suma: 0, n: 0 }
-    s.suma += r.temperatura_c
+    s.suma += r[campo]
     s.n++
     porCiudad.set(r.ciudad, s)
     sumas.set(dia, porCiudad)
@@ -81,3 +82,9 @@ export function mediaDiariaTemperatura(
     return punto
   })
 }
+
+export const mediaDiariaTemperatura = (registros: readonly RegistroValido[]) =>
+  mediaDiaria(registros, "temperatura_c")
+
+export const mediaDiariaHumedad = (registros: readonly RegistroValido[]) =>
+  mediaDiaria(registros, "humedad_pct")

@@ -130,6 +130,9 @@
   }
   body {
     @apply bg-background text-foreground;
+    /* Evita que un desbordamiento horizontal amplíe la página en iOS y
+       descoloque la barra fija; clip no crea un contenedor de scroll. */
+    overflow-x: clip;
   }
   html {
     @apply font-sans;

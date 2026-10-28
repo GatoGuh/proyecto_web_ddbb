@@ -1,4 +1,4 @@
-import type { Metadata } from "next"
+import type { Metadata, Viewport } from "next"
 import { IBM_Plex_Mono, IBM_Plex_Sans } from "next/font/google"
 
 import "./globals.css"
@@ -15,6 +15,15 @@ export const metadata: Metadata = {
   title: "Pipeline ETL · Open-Meteo → Supabase",
   description:
     "Práctica de Big Data: extracción, transformación, limpieza, filtrado y carga de datos meteorológicos.",
+}
+
+// viewport-fit=cover permite respetar la zona segura del iPhone (barra de
+// inicio) en la barra fija inferior. No se limita el zoom del usuario.
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: "#09090b",
 }
 
 const fontMono = IBM_Plex_Mono({

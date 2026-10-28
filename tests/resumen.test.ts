@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest"
 import { colorCiudad } from "../lib/etl/ciudades"
-import { mediaDiariaTemperatura, resumirPorCiudad } from "../lib/etl/resumen"
+import {
+  mediaDiariaHumedad,
+  mediaDiariaTemperatura,
+  resumirPorCiudad,
+} from "../lib/etl/resumen"
 import type { RegistroValido } from "../lib/etl/tipos"
 
 const r = (
@@ -37,6 +41,17 @@ describe("Resúmenes para el mapa y los gráficos", () => {
     expect(mediaDiariaTemperatura(datos)).toEqual([
       { fecha: "2026-09-01", Madrid: 15, Bilbao: 15 },
       { fecha: "2026-09-02", Madrid: 30 },
+    ])
+  })
+
+  it("calcula la humedad media diaria por ciudad", () => {
+    const humedad = [
+      { ...r("Madrid", "2026-09-01T00:00:00.000Z", 10), humedad_pct: 40 },
+      { ...r("Madrid", "2026-09-01T12:00:00.000Z", 20), humedad_pct: 61 },
+      { ...r("Bilbao", "2026-09-01T00:00:00.000Z", 15), humedad_pct: 90 },
+    ]
+    expect(mediaDiariaHumedad(humedad)).toEqual([
+      { fecha: "2026-09-01", Madrid: 50.5, Bilbao: 90 },
     ])
   })
 
