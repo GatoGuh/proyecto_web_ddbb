@@ -34,7 +34,7 @@ import {
   PestanaRechazados,
   PestanaTransformados,
 } from "./pestanas-datos"
-import { Cabecera, type Destino, type Fase } from "./pipeline"
+import { Cabecera, type Destino, type Paso } from "./pipeline"
 import { Seccion } from "./seccion"
 
 const DETALLES = [
@@ -155,18 +155,6 @@ export function BancoEtl() {
     [validos]
   )
 
-  // Abre una pestaña de la zona de datos y la lleva a la vista. Las vistas
-  // técnicas viven dentro de la pestaña «Detalles técnicos».
-  const irA = (p: string) => {
-    const tecnica = DETALLES.find((d) => d.id === p)
-    if (tecnica) setDetalle(tecnica.id)
-    setPestana(tecnica ? "tecnicos" : p)
-    setAvanzada(true)
-    document
-      .getElementById("paso-eleccion")
-      ?.scrollIntoView({ behavior: "smooth", block: "start" })
-  }
-
   const nuevaExtraccion = () => {
     setSeleccion(new Set())
     setFiltros(FILTROS_INICIALES)
@@ -178,9 +166,6 @@ export function BancoEtl() {
   const peticiones = extraccion
     ? extraccion.ciudades.map((c) => extraccion.peticiones[c])
     : []
-  const terminadas = peticiones.filter(
-    (p) => p.estado === "completada" || p.estado === "error"
-  )
   const conError = peticiones.filter((p) => p.estado === "error")
   const totalExtraido = transformacion.valor.registros.length
   const hayDatos = respuestas.length > 0
@@ -209,106 +194,37 @@ export function BancoEtl() {
         .reduce((n, l) => n + l.registros.length, 0)
     : null
 
-  const fases: Fase[] = [
+  // Los tres pasos de la página, con su estado real.
+  const verificacion = carga?.verificacion
+  const pasos: Paso[] = [
     {
-      id: "extraccion",
-      titulo: "Extracción",
-      explicacion: "Descarga una respuesta JSON por ciudad desde Open-Meteo.",
+      id: "paso-descarga",
+      titulo: "Descarga",
       estado: estadoExtraccion,
-      entrada: {
-        valor: extraccion ? peticiones.length : null,
-        etiqueta: "ciudades pedidas",
-      },
-      salida: {
-        valor: extraccion ? respuestas.length : null,
-        etiqueta: "respuestas correctas",
-      },
-      duracionMs: extraccion
-        ? terminadas.reduce((n, p) => n + (p.duracionMs ?? 0), 0) || undefined
-        : undefined,
-      nota:
-        extraccion && terminadas.length < peticiones.length
-          ? `${terminadas.length} procesadas, ${peticiones.length - terminadas.length} pendientes`
-          : conError.length > 0
-            ? `${conError.length} con error: reinténtalas en el paso 1`
-            : undefined,
-      pestana: "json",
-    },
-    {
-      id: "transformacion",
-      titulo: "Transformación",
-      explicacion:
-        "Convierte las listas de cada respuesta en una fila por ciudad y hora (UTC).",
-      estado: !hayDatos
-        ? "pendiente"
-        : transformacion.valor.erroresEstructurales.length > 0
-          ? "error"
-          : "completada",
-      entrada: {
-        valor: hayDatos ? respuestas.length : null,
-        etiqueta: "respuestas JSON",
-      },
-      salida: { valor: hayDatos ? totalExtraido : null, etiqueta: "filas" },
-      duracionMs: hayDatos ? transformacion.duracionMs : undefined,
-      nota:
-        transformacion.valor.avisos.length > 0
-          ? `${transformacion.valor.avisos.length} aviso(s) de estructura`
+      detalle: hayDatos
+        ? `${formatoEntero(totalExtraido)} registros`
+        : extrayendo
+          ? "descargando…"
           : undefined,
-      pestana: "transformados",
     },
     {
-      id: "limpieza",
-      titulo: "Limpieza",
-      explicacion:
-        "Descarta filas con valores ausentes, nulos o imposibles, y los duplicados.",
-      estado: totalExtraido === 0 ? "pendiente" : "completada",
-      entrada: { valor: hayDatos ? totalExtraido : null, etiqueta: "filas" },
-      salida: { valor: hayDatos ? validos.length : null, etiqueta: "válidas" },
-      duracionMs: hayDatos ? limpieza.duracionMs : undefined,
-      nota: hayDatos
-        ? `${formatoEntero(limpieza.valor.rechazados.length)} rechazadas por calidad`
+      id: "paso-datos",
+      titulo: "Visualización",
+      estado: hayDatos ? "completada" : "pendiente",
+      detalle: hayDatos
+        ? `${formatoEntero(validos.length)} válidos`
         : undefined,
-      pestana: "rechazados",
     },
     {
-      id: "filtrado",
-      titulo: "Filtrado y selección",
-      explicacion:
-        "Tú decides qué filas se suben, con filtros y casillas de selección.",
-      estado:
-        validos.length === 0
-          ? "pendiente"
-          : erroresFiltro.length > 0
-            ? "error"
-            : "completada",
-      entrada: { valor: hayDatos ? validos.length : null, etiqueta: "válidas" },
-      salida: {
-        valor: hayDatos ? aCargar.length : null,
-        etiqueta: "elegidas para subir",
-      },
-      duracionMs: validos.length > 0 ? conjunto.duracionMs : undefined,
-      nota: hayDatos
-        ? `${formatoEntero(coinciden.length)} cumplen los filtros`
-        : undefined,
-      pestana: "validos",
-    },
-    {
-      id: "carga",
-      titulo: "Carga",
-      explicacion:
-        "Guarda las filas elegidas en Supabase, en lotes de 500, y comprueba que llegaron.",
+      id: "paso-eleccion",
+      titulo: "Subida a la base de datos",
       estado: estadoCarga,
-      entrada: {
-        valor: carga ? carga.congelados.length : null,
-        etiqueta: "enviadas",
-      },
-      salida: { valor: confirmadosCarga, etiqueta: "confirmadas" },
-      duracionMs: carga?.duracionMs || undefined,
-      nota:
-        carga?.verificacion?.estado === "completada"
-          ? `${formatoEntero(carga.verificacion.comprobadas - carga.verificacion.faltan.length)} verificadas en la tabla`
-          : undefined,
-      pestana: "carga",
+      detalle:
+        verificacion?.estado === "completada"
+          ? `${formatoEntero(verificacion.comprobadas - verificacion.faltan.length)} guardados`
+          : carga
+            ? `${formatoEntero(confirmadosCarga ?? 0)} de ${formatoEntero(carga.congelados.length)}`
+            : undefined,
     },
   ]
 
@@ -371,7 +287,7 @@ export function BancoEtl() {
 
   return (
     <>
-      <Cabecera fases={fases} destino={destino} onInspeccionar={irA} />
+      <Cabecera pasos={pasos} destino={destino} />
 
       <div className="mx-auto flex max-w-7xl flex-col gap-6 px-4 py-6 sm:px-6">
         <Configuracion

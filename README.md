@@ -3,8 +3,9 @@
 Práctica de Big Data. La aplicación extrae datos meteorológicos horarios de la
 [API histórica de Open-Meteo](https://open-meteo.com/en/docs/historical-weather-api),
 los transforma, limpia y filtra, y carga en Supabase solo los registros que tú
-seleccionas. Cada fase muestra su estado, cuántos registros entran y salen, y
-cuánto ha tardado.
+seleccionas. La página se organiza en tres pasos (descarga, visualización y
+subida a la base de datos) y la cabecera muestra el estado de cada uno. El
+detalle técnico de cada fase está en la «Vista avanzada» del paso 3.
 
 Stack: Next.js 16 (App Router), TypeScript, Tailwind CSS 4, shadcn/ui (Base UI)
 y `@supabase/supabase-js`.
