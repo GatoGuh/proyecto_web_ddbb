@@ -33,7 +33,7 @@ export function Seccion({
         {numero !== undefined && (
           <span
             aria-hidden
-            className="grid size-8 shrink-0 place-items-center rounded-md morado-conico text-sm font-semibold text-white"
+            className="grid size-8 shrink-0 place-items-center rounded-md solido-claro text-sm font-semibold text-white"
           >
             {numero}
           </span>

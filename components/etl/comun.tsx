@@ -10,7 +10,6 @@ import {
   TriangleAlertIcon,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { NOMBRES_CIUDADES } from "@/lib/etl/ciudades"
 import { Button } from "@/components/ui/button"
 
 export type EstadoFase = "pendiente" | "en_curso" | "completada" | "error"
@@ -200,7 +199,7 @@ export function SelectorNativo({
   return (
     <select
       className={cn(
-        "h-8 rounded-lg border border-input bg-campo px-2 text-sm text-foreground outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50",
+        "h-8 rounded-lg border border-input bg-campo px-2 text-base text-foreground outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50 sm:text-sm",
         className
       )}
       {...props}
@@ -236,9 +235,6 @@ export function descargarJson(nombre: string, datos: unknown) {
   URL.revokeObjectURL(url)
 }
 
-// Cada ciudad ilumina su chip desde un punto distinto del degradado radial.
-const FOCOS = ["0% 0%", "100% 0%", "50% 120%", "0% 100%", "100% 100%"]
-
 /** Botón conmutador de una ciudad, con su color fijo y estado accesible. */
 export function ChipCiudad({
   ciudad,
@@ -259,16 +255,10 @@ export function ChipCiudad({
       aria-pressed={marcada}
       disabled={disabled}
       onClick={onClick}
-      style={
-        {
-          "--foco":
-            FOCOS[NOMBRES_CIUDADES.indexOf(ciudad) % FOCOS.length] ?? FOCOS[0],
-        } as React.CSSProperties
-      }
       className={cn(
         "inline-flex h-8 items-center gap-2 rounded-md px-3 text-sm font-medium transition-colors focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none disabled:opacity-50",
         marcada
-          ? "morado-radial text-white"
+          ? "solido-claro"
           : "solido text-muted-foreground hover:text-foreground"
       )}
     >

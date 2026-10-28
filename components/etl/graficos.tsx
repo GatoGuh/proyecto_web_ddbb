@@ -18,8 +18,7 @@ import { TableIcon, LineChartIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { colorCiudad } from "@/lib/etl/ciudades"
 import type { PuntoDiario, ResumenCiudad } from "@/lib/etl/resumen"
-import { cn } from "@/lib/utils"
-import { formatoDecimal, formatoEntero } from "./comun"
+import { formatoDecimal } from "./comun"
 
 const MESES = [
   "ene",
@@ -41,62 +40,6 @@ const fechaCorta = (iso: string) =>
 
 // Estilo del texto de los ejes (sin trazo, para que no se vea borroso).
 const EJE = { fontSize: 14, fill: "var(--muted-foreground)" }
-
-/* ------------------------------------------------------------------ */
-/* Embudo: los cinco contadores del pipeline como barras comparables   */
-/* ------------------------------------------------------------------ */
-
-export type FilaEmbudo = {
-  etiqueta: string
-  valor: number
-  ayuda?: string
-  destacada?: boolean
-}
-
-export function Embudo({
-  filas,
-  total,
-}: {
-  filas: FilaEmbudo[]
-  total: number
-}) {
-  return (
-    <figure className="grid gap-3">
-      <figcaption className="text-sm font-semibold">
-        De lo descargado a lo que se sube
-      </figcaption>
-      <dl className="grid gap-3">
-        {filas.map((f) => {
-          const pct = total > 0 ? (f.valor / total) * 100 : 0
-          return (
-            <div key={f.etiqueta} className="grid gap-1">
-              <div className="flex items-baseline justify-between gap-2 text-sm">
-                <dt className={cn(f.destacada && "font-semibold")}>
-                  {f.etiqueta}
-                </dt>
-                <dd className="font-semibold tabular-nums">
-                  {formatoEntero(f.valor)}
-                </dd>
-              </div>
-              <div className="h-2 rounded-sm bg-muted" aria-hidden>
-                <div
-                  className={cn(
-                    "h-2 rounded-sm transition-[width] duration-500",
-                    f.destacada ? "morado-horizontal" : "bg-zinc-600"
-                  )}
-                  style={{ width: `${Math.max(pct, f.valor > 0 ? 1 : 0)}%` }}
-                />
-              </div>
-              {f.ayuda && (
-                <dd className="text-sm text-muted-foreground">{f.ayuda}</dd>
-              )}
-            </div>
-          )
-        })}
-      </dl>
-    </figure>
-  )
-}
 
 /* ------------------------------------------------------------------ */
 /* Utilidades compartidas                                              */
@@ -183,22 +126,61 @@ function CajaTooltip({
 }
 
 /* ------------------------------------------------------------------ */
-/* Temperatura media diaria por ciudad                                 */
+/* Media diaria por ciudad (temperatura y humedad)                     */
 /* ------------------------------------------------------------------ */
 
-export function GraficoTemperatura({
+type PropsDiario = { datos: PuntoDiario[]; ciudades: string[] }
+
+export function GraficoTemperatura(props: PropsDiario) {
+  return (
+    <GraficoDiario
+      {...props}
+      titulo="Temperatura media diaria"
+      subtitulo="°C, media de las 24 horas de cada día (UTC)."
+      unidad="°C"
+      sufijoEje="°"
+      magnitud="la temperatura media diaria"
+    />
+  )
+}
+
+export function GraficoHumedad(props: PropsDiario) {
+  return (
+    <GraficoDiario
+      {...props}
+      titulo="Humedad media diaria"
+      subtitulo="% de humedad relativa, media de las 24 horas de cada día (UTC)."
+      unidad="%"
+      sufijoEje="%"
+      magnitud="la humedad relativa media diaria"
+    />
+  )
+}
+
+function GraficoDiario({
   datos,
   ciudades,
-}: {
-  datos: PuntoDiario[]
-  ciudades: string[]
+  titulo,
+  subtitulo,
+  unidad,
+  sufijoEje,
+  magnitud,
+}: PropsDiario & {
+  titulo: string
+  subtitulo: string
+  /** Unidad para la tabla y el tooltip, p. ej. "°C". */
+  unidad: string
+  /** Sufijo corto para las marcas del eje Y, p. ej. "°". */
+  sufijoEje: string
+  /** Para la descripción accesible, p. ej. "la temperatura media diaria". */
+  magnitud: string
 }) {
   const [verTabla, setVerTabla] = React.useState(false)
   return (
     <figure className="grid min-w-0 content-start gap-3">
       <CabeceraGrafico
-        titulo="Temperatura media diaria"
-        subtitulo="°C, media de las 24 horas de cada día (UTC). Registros válidos."
+        titulo={titulo}
+        subtitulo={subtitulo}
         verTabla={verTabla}
         setVerTabla={setVerTabla}
       />
@@ -211,7 +193,7 @@ export function GraficoTemperatura({
                 <th className="px-2 py-1.5 text-left font-medium">Día</th>
                 {ciudades.map((c) => (
                   <th key={c} className="px-2 py-1.5 text-right font-medium">
-                    {c} (°C)
+                    {c} ({unidad})
                   </th>
                 ))}
               </tr>
@@ -234,9 +216,9 @@ export function GraficoTemperatura({
         </div>
       ) : (
         <div
-          className="h-80 w-full lg:h-[26rem]"
+          className="h-72 w-full lg:h-80"
           role="img"
-          aria-label="Gráfico de líneas de la temperatura media diaria por ciudad. Disponible también como tabla."
+          aria-label={`Gráfico de líneas de ${magnitud} por ciudad. Disponible también como tabla.`}
         >
           <ResponsiveContainer width="100%" height="100%">
             <LineChart
@@ -257,9 +239,9 @@ export function GraficoTemperatura({
                 stroke="var(--eje)"
                 tickLine={false}
                 axisLine={false}
-                width={50}
+                width={58}
                 domain={["auto", "auto"]}
-                tickFormatter={(v: number) => `${v}°`}
+                tickFormatter={(v: number) => `${v}${sufijoEje}`}
               />
               <Tooltip
                 cursor={{ stroke: "var(--eje)", strokeWidth: 1 }}
@@ -270,7 +252,7 @@ export function GraficoTemperatura({
                       filas={(payload as readonly EntradaTooltip[]).map(
                         (p) => ({
                           clave: String(p.dataKey),
-                          valor: `${formatoDecimal(Number(p.value))} °C`,
+                          valor: `${formatoDecimal(Number(p.value))} ${unidad}`,
                         })
                       )}
                     />

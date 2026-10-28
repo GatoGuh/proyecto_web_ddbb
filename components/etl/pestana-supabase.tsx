@@ -138,7 +138,7 @@ export function PestanaSupabase({
             en esta sesión y se pierden al recargar la página.
           </p>
         </div>
-        <div className="rounded-xl border-2 solido-acento p-3 text-sm">
+        <div className="rounded-xl border-2 solido p-3 text-sm">
           <p className="flex items-center gap-1.5 font-medium">
             <DatabaseIcon aria-hidden className="size-4" />
             Datos persistidos (Supabase)

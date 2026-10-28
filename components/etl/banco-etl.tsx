@@ -13,7 +13,11 @@ import {
   type Orden,
 } from "@/lib/etl/filtrar"
 import { limpiarRegistros } from "@/lib/etl/limpiar"
-import { mediaDiariaTemperatura, resumirPorCiudad } from "@/lib/etl/resumen"
+import {
+  mediaDiariaHumedad,
+  mediaDiariaTemperatura,
+  resumirPorCiudad,
+} from "@/lib/etl/resumen"
 import { claveRegistro, type RespuestaCiudad } from "@/lib/etl/tipos"
 import { transformarRespuestas } from "@/lib/etl/transformar"
 import { cn } from "@/lib/utils"
@@ -21,7 +25,7 @@ import { Button } from "@/components/ui/button"
 import { BarraSubida } from "./barra-subida"
 import { formatoEntero, type EstadoFase } from "./comun"
 import { Configuracion } from "./configuracion"
-import { Embudo, GraficoLluvia, GraficoTemperatura } from "./graficos"
+import { GraficoHumedad, GraficoLluvia, GraficoTemperatura } from "./graficos"
 import { PestanaCarga, type EstadoSupabase } from "./pestana-carga"
 import { PestanaSupabase } from "./pestana-supabase"
 import { PestanaValidos } from "./pestana-validos"
@@ -142,6 +146,10 @@ export function BancoEtl() {
   const resumen = React.useMemo(() => resumirPorCiudad(validos), [validos])
   const temperaturaDiaria = React.useMemo(
     () => mediaDiariaTemperatura(validos),
+    [validos]
+  )
+  const humedadDiaria = React.useMemo(
+    () => mediaDiariaHumedad(validos),
     [validos]
   )
 
@@ -364,48 +372,20 @@ export function BancoEtl() {
             id="paso-datos"
             numero={2}
             titulo="Así son los datos"
-            descripcion="Cuántas filas quedan tras cada fase y cómo se comportan la temperatura y la lluvia en las ciudades descargadas."
+            descripcion="Cómo se comportan la temperatura, la humedad y la lluvia en las ciudades descargadas."
           >
-            <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
-              <div className="grid grid-cols-1 content-start gap-8">
-                <Embudo
-                  total={totalExtraido}
-                  filas={[
-                    {
-                      etiqueta: "Total extraído",
-                      valor: totalExtraido,
-                    },
-                    {
-                      etiqueta: "Válidos",
-                      valor: validos.length,
-                    },
-                    {
-                      etiqueta: "Rechazados",
-                      valor: limpieza.valor.rechazados.length,
-                      ayuda: "Motivos en «Detalles técnicos».",
-                    },
-                    {
-                      etiqueta: "Coinciden con los filtros",
-                      valor: coinciden.length,
-                      ayuda: `${formatoEntero(validos.length - coinciden.length)} válidos quedan fuera por tus filtros.`,
-                    },
-                    {
-                      etiqueta: "Seleccionados para cargar",
-                      valor: aCargar.length,
-                      ayuda:
-                        seleccionFueraDeFiltros > 0
-                          ? `Hay además ${formatoEntero(seleccionFueraDeFiltros)} seleccionados fuera de los filtros, que no se subirán.`
-                          : undefined,
-                      destacada: true,
-                    },
-                  ]}
-                />
-                <GraficoLluvia resumen={[...resumen.values()]} />
-              </div>
+            <div className="grid grid-cols-1 gap-10">
               <GraficoTemperatura
                 datos={temperaturaDiaria}
                 ciudades={ciudadesDisponibles}
               />
+              <div className="grid grid-cols-1 gap-10 lg:grid-cols-2">
+                <GraficoHumedad
+                  datos={humedadDiaria}
+                  ciudades={ciudadesDisponibles}
+                />
+                <GraficoLluvia resumen={[...resumen.values()]} />
+              </div>
             </div>
           </Seccion>
         )}

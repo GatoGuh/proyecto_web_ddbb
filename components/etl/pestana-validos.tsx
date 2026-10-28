@@ -5,10 +5,10 @@ import {
   ArrowDownIcon,
   ArrowUpIcon,
   ArrowUpDownIcon,
-  CheckSquareIcon,
+  ChevronDownIcon,
   FilterXIcon,
   SlidersHorizontalIcon,
-  SquareIcon,
+  TableIcon,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -107,6 +107,8 @@ export function PestanaValidos(props: Props) {
     "coinciden"
   )
   const [masFiltros, setMasFiltros] = React.useState(false)
+  // La tabla de registros solo se muestra si se pide (vista previa avanzada).
+  const [verTabla, setVerTabla] = React.useState(false)
 
   const excluidos = React.useMemo(() => {
     if (vista !== "excluidos") return []
@@ -166,6 +168,7 @@ export function PestanaValidos(props: Props) {
     avanzadosActivos > 0 || filtros.soloLluvia || filtros.ciudades !== null
   const marcadasCiudad = filtros.ciudades ?? ciudadesDisponibles
   const todasMarcadas = coinciden.every((r) => seleccion.has(claveRegistro(r)))
+  const marcar = coinciden.length > 0 && !todasMarcadas
   const columnaOrden = COLUMNAS.find((c) => c.campo === orden.campo)?.titulo
 
   return (
@@ -173,13 +176,13 @@ export function PestanaValidos(props: Props) {
       <ol className="grid gap-2 text-sm sm:grid-cols-3">
         {[
           "Filtra para quedarte con las filas que te interesan.",
-          "Marca las filas que quieres subir, una a una o todas las filtradas.",
+          "Marca las filas filtradas para subirlas.",
           "Revisa la lista final en «Revisar y subir» y súbela.",
         ].map((t, i) => (
           <li key={t} className="flex gap-2 rounded-md solido p-2.5">
             <span
               aria-hidden
-              className="grid size-6 shrink-0 place-items-center rounded-sm morado-conico text-sm font-bold text-white"
+              className="grid size-6 shrink-0 place-items-center rounded-sm solido-claro text-sm font-bold"
             >
               {i + 1}
             </span>
@@ -314,7 +317,7 @@ export function PestanaValidos(props: Props) {
         )}
       </div>
 
-      <div className="flex flex-wrap items-center gap-2 rounded-lg border solido-acento p-3">
+      <div className="flex flex-wrap items-center gap-2 rounded-lg bg-background p-3">
         <p className="text-sm" aria-live="polite">
           <strong className="text-base tabular-nums">
             {formatoEntero(props.aCargar)}
@@ -327,166 +330,169 @@ export function PestanaValidos(props: Props) {
             </span>
           )}
         </p>
-        <div className="ml-auto flex flex-wrap gap-2">
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() =>
-              setSeleccion(
-                new Set([...seleccion, ...coinciden.map(claveRegistro)])
-              )
-            }
-            disabled={coinciden.length === 0 || todasMarcadas}
-          >
-            <CheckSquareIcon data-icon="inline-start" />
-            {todasMarcadas && coinciden.length > 0
-              ? `Las ${formatoEntero(coinciden.length)} filtradas ya están marcadas`
-              : `Marcar las ${formatoEntero(coinciden.length)} filtradas`}
-          </Button>
-          {seleccionFueraDeFiltros > 0 && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                const claves = new Set(coinciden.map(claveRegistro))
-                setSeleccion(
-                  new Set([...seleccion].filter((c) => claves.has(c)))
+        {/* Un único botón: marca las filtradas o, si ya lo están, lo desmarca todo. */}
+        <Button
+          className="ml-auto"
+          variant="outline"
+          onClick={() =>
+            marcar
+              ? setSeleccion(
+                  new Set([...seleccion, ...coinciden.map(claveRegistro)])
                 )
-              }}
-            >
-              Desmarcar las que no cumplen
-            </Button>
-          )}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setSeleccion(new Set())}
-            disabled={seleccion.size === 0}
-          >
-            <SquareIcon data-icon="inline-start" />
-            Desmarcar todo
-          </Button>
-        </div>
-      </div>
-
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div
-          role="radiogroup"
-          aria-label="Filas a mostrar"
-          className="inline-flex gap-0.5 rounded-md bg-muted p-0.5"
+              : setSeleccion(new Set())
+          }
+          disabled={!marcar && seleccion.size === 0}
         >
-          <Button
-            size="sm"
-            role="radio"
-            aria-checked={vista === "coinciden"}
-            variant={vista === "coinciden" ? "seleccion" : "ghost"}
-            onClick={() => setVista("coinciden")}
-          >
-            Cumplen los filtros ({formatoEntero(coinciden.length)})
-          </Button>
-          <Button
-            size="sm"
-            role="radio"
-            aria-checked={vista === "excluidos"}
-            variant={vista === "excluidos" ? "seleccion" : "ghost"}
-            onClick={() => setVista("excluidos")}
-          >
-            No los cumplen ({formatoEntero(validos.length - coinciden.length)})
-          </Button>
-        </div>
-        <p className="text-sm text-muted-foreground">
-          Ordenado por «{columnaOrden}»,{" "}
-          {orden.direccion === "asc" ? "de menor a mayor" : "de mayor a menor"}.
-          Pulsa el título de una columna para cambiarlo.
-        </p>
+          {marcar
+            ? `Marcar las ${formatoEntero(coinciden.length)} filtradas`
+            : "Desmarcar todo"}
+        </Button>
       </div>
 
-      {filas.length === 0 ? (
-        <SinDatos texto="Ningún registro en esta vista." />
-      ) : (
-        <>
-          <div className="overflow-x-auto rounded-lg border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-10">
-                    <Checkbox
-                      aria-label="Seleccionar las filas de esta página"
-                      checked={
-                        marcadasPagina > 0 &&
-                        marcadasPagina === clavesPagina.length
-                      }
-                      indeterminate={
-                        marcadasPagina > 0 &&
-                        marcadasPagina < clavesPagina.length
-                      }
-                      onCheckedChange={(v) => alternarPagina(v)}
-                    />
-                  </TableHead>
-                  {COLUMNAS.map((c) => (
-                    <TableHead
-                      key={c.campo}
-                      className={c.numerica ? "text-right" : undefined}
-                      aria-sort={
-                        orden.campo === c.campo
-                          ? orden.direccion === "asc"
-                            ? "ascending"
-                            : "descending"
-                          : "none"
-                      }
-                    >
-                      <button
-                        type="button"
-                        onClick={() => ordenarPor(c.campo)}
-                        className="inline-flex items-center gap-1 font-medium hover:underline"
-                      >
-                        {c.titulo}
-                        {orden.campo !== c.campo ? (
-                          <ArrowUpDownIcon
-                            aria-hidden
-                            className="size-3.5 opacity-50"
-                          />
-                        ) : orden.direccion === "asc" ? (
-                          <ArrowUpIcon aria-hidden className="size-3.5" />
-                        ) : (
-                          <ArrowDownIcon aria-hidden className="size-3.5" />
-                        )}
-                      </button>
-                    </TableHead>
-                  ))}
-                  <TableHead>En Supabase</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {visibles.map((r) => {
-                  const clave = claveRegistro(r)
-                  const marcada = seleccion.has(clave)
-                  return (
-                    <TableRow
-                      key={clave}
-                      data-state={marcada ? "selected" : undefined}
-                    >
-                      <TableCell>
-                        <Checkbox
-                          aria-label={`Seleccionar ${r.ciudad} ${formatoFechaUtc(r.fecha_hora)}`}
-                          checked={marcada}
-                          onCheckedChange={(v) => alternarFila(clave, v)}
-                        />
-                      </TableCell>
-                      <CeldasRegistro r={r} />
-                      <TableCell className="text-sm text-muted-foreground">
-                        {clavesConfirmadas.has(clave)
-                          ? "Verificado"
-                          : "Solo local"}
-                      </TableCell>
-                    </TableRow>
-                  )
-                })}
-              </TableBody>
-            </Table>
+      <Button
+        variant="ghost"
+        className="justify-self-start"
+        aria-expanded={verTabla}
+        aria-controls="vista-avanzada"
+        onClick={() => setVerTabla(!verTabla)}
+      >
+        <TableIcon data-icon="inline-start" />
+        {verTabla ? "Ocultar vista previa avanzada" : "Vista previa avanzada"}
+        <ChevronDownIcon
+          data-icon="inline-end"
+          className={verTabla ? "rotate-180" : undefined}
+        />
+      </Button>
+
+      {verTabla && (
+        <div id="vista-avanzada" className="grid grid-cols-1 gap-4">
+          <p className="text-sm text-muted-foreground">
+            Aquí puedes revisar cada fila, marcarlas una a una y ordenar por
+            cualquier columna pulsando su título.
+          </p>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div
+              role="radiogroup"
+              aria-label="Filas a mostrar"
+              className="inline-flex gap-0.5 rounded-md bg-muted p-0.5"
+            >
+              <Button
+                size="sm"
+                role="radio"
+                aria-checked={vista === "coinciden"}
+                variant={vista === "coinciden" ? "seleccion" : "ghost"}
+                onClick={() => setVista("coinciden")}
+              >
+                Cumplen los filtros ({formatoEntero(coinciden.length)})
+              </Button>
+              <Button
+                size="sm"
+                role="radio"
+                aria-checked={vista === "excluidos"}
+                variant={vista === "excluidos" ? "seleccion" : "ghost"}
+                onClick={() => setVista("excluidos")}
+              >
+                No los cumplen (
+                {formatoEntero(validos.length - coinciden.length)})
+              </Button>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Ordenado por «{columnaOrden}»,{" "}
+              {orden.direccion === "asc"
+                ? "de menor a mayor"
+                : "de mayor a menor"}
+              . Pulsa el título de una columna para cambiarlo.
+            </p>
           </div>
-          <Paginador paginacion={paginacion} />
-        </>
+
+          {filas.length === 0 ? (
+            <SinDatos texto="Ningún registro en esta vista." />
+          ) : (
+            <>
+              <div className="overflow-x-auto rounded-lg border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-10">
+                        <Checkbox
+                          aria-label="Seleccionar las filas de esta página"
+                          checked={
+                            marcadasPagina > 0 &&
+                            marcadasPagina === clavesPagina.length
+                          }
+                          indeterminate={
+                            marcadasPagina > 0 &&
+                            marcadasPagina < clavesPagina.length
+                          }
+                          onCheckedChange={(v) => alternarPagina(v)}
+                        />
+                      </TableHead>
+                      {COLUMNAS.map((c) => (
+                        <TableHead
+                          key={c.campo}
+                          className={c.numerica ? "text-right" : undefined}
+                          aria-sort={
+                            orden.campo === c.campo
+                              ? orden.direccion === "asc"
+                                ? "ascending"
+                                : "descending"
+                              : "none"
+                          }
+                        >
+                          <button
+                            type="button"
+                            onClick={() => ordenarPor(c.campo)}
+                            className="inline-flex items-center gap-1 font-medium hover:underline"
+                          >
+                            {c.titulo}
+                            {orden.campo !== c.campo ? (
+                              <ArrowUpDownIcon
+                                aria-hidden
+                                className="size-3.5 opacity-50"
+                              />
+                            ) : orden.direccion === "asc" ? (
+                              <ArrowUpIcon aria-hidden className="size-3.5" />
+                            ) : (
+                              <ArrowDownIcon aria-hidden className="size-3.5" />
+                            )}
+                          </button>
+                        </TableHead>
+                      ))}
+                      <TableHead>En Supabase</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {visibles.map((r) => {
+                      const clave = claveRegistro(r)
+                      const marcada = seleccion.has(clave)
+                      return (
+                        <TableRow
+                          key={clave}
+                          data-state={marcada ? "selected" : undefined}
+                        >
+                          <TableCell>
+                            <Checkbox
+                              aria-label={`Seleccionar ${r.ciudad} ${formatoFechaUtc(r.fecha_hora)}`}
+                              checked={marcada}
+                              onCheckedChange={(v) => alternarFila(clave, v)}
+                            />
+                          </TableCell>
+                          <CeldasRegistro r={r} />
+                          <TableCell className="text-sm text-muted-foreground">
+                            {clavesConfirmadas.has(clave)
+                              ? "Verificado"
+                              : "Solo local"}
+                          </TableCell>
+                        </TableRow>
+                      )
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
+              <Paginador paginacion={paginacion} />
+            </>
+          )}
+        </div>
       )}
     </div>
   )
