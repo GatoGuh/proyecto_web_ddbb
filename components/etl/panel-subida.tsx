@@ -10,6 +10,7 @@ import {
 import { Button } from "@/components/ui/button"
 import type { Carga } from "@/hooks/use-carga"
 import { cn } from "@/lib/utils"
+import { Cristal } from "./cristal"
 import { formatoEntero } from "./comun"
 
 /**
@@ -51,6 +52,7 @@ export function PanelSubida({
   compacto?: boolean
 }) {
   const subiendo = carga?.enCurso ?? false
+  const textoSubir = `Subir ${formatoEntero(marcados)} registros a Supabase`
   return (
     <div className="grid grid-cols-1 gap-3">
       <div
@@ -72,32 +74,52 @@ export function PanelSubida({
             {hayFiltros && " (con filtros)"}
           </span>
         </p>
-        <div className={cn("grid grid-cols-1 gap-2", !compacto && "sm:flex")}>
+        {/* Los dos botones en fila: «Marcar todos» con su ancho y «Subir»
+            ocupando el resto. En móvil, uno debajo del otro. */}
+        <div
+          className={cn(
+            "grid grid-cols-1 gap-2",
+            compacto ? "sm:grid-cols-[auto_1fr]" : "sm:flex"
+          )}
+        >
           {/* Un único botón: marca todos o, si ya lo están, lo desmarca todo. */}
-          <Button
-            variant="outline"
-            size="lg"
-            className="h-11 px-4"
-            onClick={todosMarcados ? onDesmarcarTodo : onMarcarTodos}
-            disabled={total === 0 || subiendo}
-          >
-            {todosMarcados ? "Desmarcar todo" : "Marcar todos"}
-          </Button>
-          <Button
-            size="lg"
-            className="h-11 px-4"
-            disabled={motivoBloqueo !== null || subiendo}
-            onClick={onSubir}
-          >
-            {subiendo ? (
-              <Loader2Icon data-icon="inline-start" className="animate-spin" />
-            ) : (
-              <UploadCloudIcon data-icon="inline-start" />
-            )}
-            {subiendo
-              ? "Subiendo…"
-              : `Subir ${formatoEntero(marcados)} registros a Supabase`}
-          </Button>
+          <Cristal tono="claro" apagado={total === 0 || subiendo}>
+            <Button
+              variant="cristal"
+              size="lg"
+              className="h-10 px-4"
+              onClick={todosMarcados ? onDesmarcarTodo : onMarcarTodos}
+              disabled={total === 0 || subiendo}
+            >
+              {todosMarcados ? "Desmarcar todo" : "Marcar todos"}
+            </Button>
+          </Cristal>
+          <Cristal apagado={motivoBloqueo !== null || subiendo}>
+            <Button
+              variant="cristal"
+              size="lg"
+              className="h-10 px-4"
+              disabled={motivoBloqueo !== null || subiendo}
+              aria-label={subiendo ? undefined : textoSubir}
+              onClick={onSubir}
+            >
+              {subiendo ? (
+                <Loader2Icon
+                  data-icon="inline-start"
+                  className="animate-spin"
+                />
+              ) : (
+                <UploadCloudIcon data-icon="inline-start" />
+              )}
+              {/* Junto al mapa, texto corto para que quepa al lado de «Marcar
+                  todos»: el número ya se ve justo encima. */}
+              {subiendo
+                ? "Subiendo…"
+                : compacto
+                  ? "Subir a Supabase"
+                  : textoSubir}
+            </Button>
+          </Cristal>
         </div>
       </div>
 

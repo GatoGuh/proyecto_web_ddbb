@@ -7,9 +7,12 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "fondo-morado text-white",
+        default: "fondo-morado text-[var(--tinta)]",
         // Opción elegida en un grupo de botones (selector segmentado).
         seleccion: "solido-claro",
+        // Botón sobre una capa de cristal líquido (ver components/etl/cristal).
+        cristal:
+          "font-semibold text-white [text-shadow:0_1px_2px_rgb(10_6_25/60%)] hover:bg-white/5",
         outline: "solido text-foreground aria-expanded:solido-claro",
         secondary: "solido text-secondary-foreground",
         ghost: "hover:solido hover:text-foreground aria-expanded:solido",
